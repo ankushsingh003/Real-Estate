@@ -107,7 +107,95 @@ export const login = async (req, res) => {
         console.log(error);
         res.status(500).json({ message: "Internal server error" });
     }
-}
+};
 
+// to get profile
+export const getMe = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).select("-password");
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        res.json({
+            success: true,
+            user,
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
 
+// To verify user
+export const verifyEmail = async (req, res) => {
+    try{
+        const { email, verificationCode } = req.body;
+        if(!email || !verificationCode){
+            return res.status(400).json({
+                message: "Email and verification code are required",
+            });
+        }
+        const user = await User.findOne({ verificationToken: token });
+        if(!user){
+            return res.status(404).json({
+                message: "Invalid token",
+            });
+        }
+        if(user.isVerified){
+            return res.status(400).json({
+                message: "Email already verified",
+            });
+        }
+        if(user.verificationCode !== verificationCode){
+            return res.status(401).json({
+                message: "Invalid verification code",
+            });
+        }
+        user.isVerified = true;
+        user.verificationToken = null;
+        await user.save();
+        res.json({
+            message: "Email verified successfully",
+        });
+    }
+    catch(error){
+        console.log(error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+// forgot ppassword
+
+export const forgotPassword = async (req, res) => {
+    try{
+        const { email } = req.body;
+        if(!email){
+            return res.status(400).json({
+                message: "Email is required",
+            });
+        }
+        const user = await User.findOne({ email });
+        if(!user){
+            return res.status(404).json({
+                message: "User not found",
+            });
+        }
+        const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
+        user.verificationToken = verificationToken;
+        await user.save();
+        await sendEmail({
+            email,
+            subject:"Reset Password",
+            message: `<p>Please use this token to reset your password: ${verificationToken}</strong></p><p>Please enter this code on the reset password page to reset your password.</p>`,
+            htmlContent: `<h1>Your Verification Token: ${verificationToken}</h1>`,
+        });
+        res.json({
+            message: "Reset password email sent successfully",
+        });
+    }
+    catch(error){
+        console.log(error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
  
