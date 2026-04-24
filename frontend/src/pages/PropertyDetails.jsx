@@ -118,50 +118,57 @@ const PropertyDetails = () => {
               </div>
             </div>
 
-            {/* Quick Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 p-8 glass rounded-[2.5rem]">
-              <div className="text-center md:border-r border-border last:border-0">
-                <div className="text-primary mb-2 flex-center"><Bed size={24} /></div>
-                <div className="font-bold text-xl">{property.beds}</div>
-                <div className="text-xs text-muted-foreground uppercase tracking-widest">Beds</div>
-              </div>
-              <div className="text-center md:border-r border-border last:border-0">
-                <div className="text-primary mb-2 flex-center"><Bath size={24} /></div>
-                <div className="font-bold text-xl">{property.baths}</div>
-                <div className="text-xs text-muted-foreground uppercase tracking-widest">Baths</div>
-              </div>
-              <div className="text-center md:border-r border-border last:border-0">
-                <div className="text-primary mb-2 flex-center"><Square size={24} /></div>
-                <div className="font-bold text-xl">{property.sqft}</div>
-                <div className="text-xs text-muted-foreground uppercase tracking-widest">Sqft</div>
-              </div>
-              <div className="text-center">
-                <div className="text-primary mb-2 flex-center"><CheckCircle2 size={24} /></div>
-                <div className="font-bold text-xl">Active</div>
-                <div className="text-xs text-muted-foreground uppercase tracking-widest">Status</div>
-              </div>
-            </div>
-
-            {/* Description */}
-            <div className="space-y-4">
-              <h2 className="text-2xl font-bold">Property Description</h2>
-              <p className="text-muted-foreground leading-relaxed text-lg">
-                {property.description}
-              </p>
-            </div>
-
-            {/* Features */}
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold">Key Features</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {property.features.map(feature => (
-                  <div key={feature} className="flex items-center gap-3 p-4 bg-muted/30 rounded-2xl">
-                    <CheckCircle2 className="text-primary" size={20} />
-                    <span className="font-medium">{feature}</span>
+            {/* Structured Quick Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { icon: <Bed size={24} />, label: "Beds", value: property.beds },
+                { icon: <Bath size={24} />, label: "Baths", value: property.baths },
+                { icon: <Square size={24} />, label: "Sqft", value: property.sqft },
+                { icon: <CheckCircle2 size={24} />, label: "Status", value: "Active" }
+              ].map((stat, idx) => (
+                <div key={idx} className="bg-muted/30 border border-border/50 p-6 rounded-3xl flex flex-col items-center justify-center gap-2 hover:bg-white hover:shadow-xl hover:border-primary/20 transition-all duration-300 group">
+                  <div className="text-primary bg-primary/10 p-3 rounded-2xl group-hover:scale-110 transition-transform">
+                    {stat.icon}
                   </div>
-                ))}
+                  <div className="text-2xl font-black">{stat.value}</div>
+                  <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em]">
+                    {stat.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+
+            {/* Structured Content Sections */}
+            <div className="space-y-8">
+              <div className="glass p-10 rounded-[2.5rem] space-y-6">
+                <h2 className="text-2xl font-bold flex items-center gap-3">
+                  <div className="w-1.5 h-8 bg-primary rounded-full"></div>
+                  Property Description
+                </h2>
+                <p className="text-muted-foreground leading-relaxed text-lg">
+                  {property.description}
+                </p>
+              </div>
+
+              <div className="glass p-10 rounded-[2.5rem] space-y-8">
+                <h2 className="text-2xl font-bold flex items-center gap-3">
+                  <div className="w-1.5 h-8 bg-primary rounded-full"></div>
+                  Key Features & Amenities
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {property.features.map(feature => (
+                    <div key={feature} className="flex items-center gap-4 p-5 bg-muted/20 border border-border/30 rounded-[2rem] hover:bg-white hover:border-primary/20 transition-all group">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex-center text-primary group-hover:bg-primary group-hover:text-white transition-all">
+                        <CheckCircle2 size={18} />
+                      </div>
+                      <span className="font-semibold text-foreground/80">{feature}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
+
           </div>
 
           {/* Right: Sidebar */}
