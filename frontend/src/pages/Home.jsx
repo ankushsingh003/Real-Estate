@@ -63,15 +63,23 @@ const Home = () => {
     fetchHero();
 
 
+    // Property card images
+    const cardImages = [
+      "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&q=80&w=1200", 
+      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=1200", 
+      "https://images.unsplash.com/photo-1600585154340-be6199f7c096?auto=format&fit=crop&q=80&w=1200"
+    ];
+
     const updatedProperties = properties.map((prop, index) => ({
       ...prop,
-      image: images[index]
+      image: cardImages[index]
     }));
     
     const timer = setTimeout(() => {
       setProperties(updatedProperties);
       setLoading(false);
     }, 800);
+
 
     return () => clearTimeout(timer);
   }, []);
