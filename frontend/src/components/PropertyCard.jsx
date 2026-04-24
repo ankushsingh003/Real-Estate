@@ -7,9 +7,12 @@ const PropertyCard = ({ property }) => {
       {/* Image Container */}
       <div className="relative h-64 overflow-hidden">
         <img 
-          src={property.image} 
+          src={property.image || "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&q=80&w=1000"} 
           alt={property.title} 
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+          onError={(e) => {
+            e.target.src = "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&q=80&w=1000";
+          }}
         />
         <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-primary uppercase tracking-wider">
           {property.type}

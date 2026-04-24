@@ -3,17 +3,21 @@ import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import { ArrowRight } from 'lucide-react';
 import PropertyCard from './components/PropertyCard';
+
 import Login from './pages/Login';
 import Register from './pages/Register';
 import VerifyEmail from './pages/VerifyEmail';
+import PostProperty from './pages/PostProperty';
+
 
 
 
 
 // Placeholder Pages
 const Home = () => {
-  const featuredProperties = [
+  const [properties, setProperties] = React.useState([
     {
       id: 1,
       title: "Modern Minimalist Villa",
@@ -23,7 +27,7 @@ const Home = () => {
       baths: 3,
       sqft: 3200,
       type: "For Sale",
-      image: "https://images.unsplash.com/photo-1600585154340-be6199f7c096?auto=format&fit=crop&q=80&w=1000"
+      query: "modern-villa"
     },
     {
       id: 2,
@@ -34,7 +38,7 @@ const Home = () => {
       baths: 2,
       sqft: 2100,
       type: "For Rent",
-      image: "https://images.unsplash.com/photo-1600607687940-4e5a29615527?auto=format&fit=crop&q=80&w=1000"
+      query: "penthouse-luxury"
     },
     {
       id: 3,
@@ -45,25 +49,50 @@ const Home = () => {
       baths: 4,
       sqft: 4500,
       type: "For Sale",
-      image: "https://images.unsplash.com/photo-1600566753190-17f0bb2a6c3e?auto=format&fit=crop&q=80&w=1000"
+      query: "contemporary-house-ocean"
     }
-  ];
+  ]);
+
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    // High-resolution architectural photography links
+    const images = [
+      "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&q=80&w=1200", // Villa
+      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=1200", // Penthouse
+      "https://images.unsplash.com/photo-1600585154340-be6199f7c096?auto=format&fit=crop&q=80&w=1200"  // Contemporary
+    ];
+
+    const fetchImages = () => {
+      const updatedProperties = properties.map((prop, index) => ({
+        ...prop,
+        image: images[index]
+      }));
+      
+      setTimeout(() => {
+        setProperties(updatedProperties);
+        setLoading(false);
+      }, 800);
+    };
+
+    fetchImages();
+  }, []);
 
   return (
     <div className="pt-32 pb-20">
       {/* Hero Section */}
       <section className="container mb-32">
         <div className="max-w-3xl animate-fade-in">
-          <h1 className="text-5xl md:text-7xl font-bold leading-tight mb-6">
+          <h1 className="text-5xl md:text-7xl font-bold leading-tight mb-6 text-balance">
             Find Your Next <span className="text-primary">Perfect</span> Home
           </h1>
-          <p className="text-xl text-muted-foreground mb-10 leading-relaxed">
+          <p className="text-xl text-muted-foreground mb-10 leading-relaxed max-w-2xl">
             Discover a premium collection of homes, apartments, and luxury villas curated just for you. Experience the new standard of real estate.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
-            <button className="bg-primary text-white px-8 py-4 rounded-2xl text-lg font-bold shadow-xl hover:bg-primary-hover hover:scale-105 transition-all">
+            <Link to="/properties" className="bg-primary text-white px-8 py-4 rounded-2xl text-lg font-bold shadow-xl hover:bg-primary-hover hover:scale-105 transition-all text-center">
               Browse Properties
-            </button>
+            </Link>
             <button className="bg-white border-2 border-border text-foreground px-8 py-4 rounded-2xl text-lg font-bold hover:bg-muted transition-all">
               How it works
             </button>
@@ -78,15 +107,22 @@ const Home = () => {
             <h2 className="text-4xl font-bold mb-4">Featured Properties</h2>
             <p className="text-muted-foreground">Handpicked luxury listings that offer the best in comfort, design, and location.</p>
           </div>
-          <Link to="/properties" className="text-primary font-bold hover:underline">
-            View All Properties →
+          <Link to="/properties" className="text-primary font-bold hover:underline flex items-center gap-2">
+            View All Properties <ArrowRight size={20} />
           </Link>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {featuredProperties.map(property => (
-            <PropertyCard key={property.id} property={property} />
-          ))}
+          {loading ? (
+            // Skeleton Loading State
+            [1, 2, 3].map(i => (
+              <div key={i} className="h-[400px] bg-muted rounded-3xl animate-pulse"></div>
+            ))
+          ) : (
+            properties.map(property => (
+              <PropertyCard key={property.id} property={property} />
+            ))
+          )}
         </div>
       </section>
     </div>
@@ -106,6 +142,8 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/add-property" element={<PostProperty />} />
+
             {/* Add more routes here as we build them */}
           </Routes>
 
