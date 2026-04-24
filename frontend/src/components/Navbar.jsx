@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Home, Search, Heart, User, Menu, X, PlusCircle } from 'lucide-react';
+import { Home, Search, Heart, User, Menu, X, Plus as PlusIcon } from 'lucide-react';
+
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -49,7 +50,7 @@ const Navbar = () => {
         {/* Action Buttons */}
         <div className="hidden md:flex items-center gap-4">
           <Link to="/add-property" className="flex items-center gap-2 text-foreground font-medium hover:text-primary transition-colors">
-            <PlusCircle size={20} />
+            <PlusIcon size={20} />
             <span>Post Property</span>
           </Link>
           <Link to="/login" className="bg-primary text-white px-6 py-2 rounded-full font-semibold hover:bg-primary-hover transition-all shadow-md hover:shadow-lg">
