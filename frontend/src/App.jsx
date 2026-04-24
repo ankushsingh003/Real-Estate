@@ -12,6 +12,8 @@ import VerifyEmail from './pages/VerifyEmail';
 import PostProperty from './pages/PostProperty';
 import Properties from './pages/Properties';
 import PropertyDetails from './pages/PropertyDetails';
+import HowItWorks from './pages/HowItWorks';
+
 
 
 
@@ -97,9 +99,10 @@ const Home = () => {
             <Link to="/properties" className="bg-primary text-white px-8 py-4 rounded-2xl text-lg font-bold shadow-xl hover:bg-primary-hover hover:scale-105 transition-all text-center">
               Browse Properties
             </Link>
-            <button className="bg-white border-2 border-border text-foreground px-8 py-4 rounded-2xl text-lg font-bold hover:bg-muted transition-all">
+            <Link to="/how-it-works" className="bg-white border-2 border-border text-foreground px-8 py-4 rounded-2xl text-lg font-bold hover:bg-muted transition-all text-center">
               How it works
-            </button>
+            </Link>
+
           </div>
         </div>
       </section>
@@ -149,6 +152,8 @@ function App() {
             <Route path="/add-property" element={<PostProperty />} />
             <Route path="/properties" element={<Properties />} />
             <Route path="/property/:id" element={<PropertyDetails />} />
+            <Route path="/how-it-works" element={<HowItWorks />} />
+
 
 
 
