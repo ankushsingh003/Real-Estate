@@ -1,9 +1,11 @@
 import React from 'react';
 import { MapPin, Bed, Bath, Square, Heart } from 'lucide-react';
+import { Link } from 'react-router-dom';
+
 
 const PropertyCard = ({ property }) => {
   return (
-    <div className="group bg-white rounded-3xl overflow-hidden border border-border hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
+    <Link to={`/property/${property.id}`} className="block group bg-white rounded-3xl overflow-hidden border border-border hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
       {/* Image Container */}
       <div className="relative h-64 overflow-hidden">
         <img 
@@ -17,7 +19,14 @@ const PropertyCard = ({ property }) => {
         <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-primary uppercase tracking-wider">
           {property.type}
         </div>
-        <button className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex-center text-muted-foreground hover:text-red-500 transition-colors shadow-sm">
+        <button 
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            // Handle favorite click
+          }}
+          className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex-center text-muted-foreground hover:text-red-500 transition-colors shadow-sm"
+        >
           <Heart size={20} />
         </button>
         <div className="absolute bottom-4 left-4 bg-primary/90 backdrop-blur-sm text-white px-4 py-2 rounded-xl font-bold text-lg">
@@ -51,8 +60,9 @@ const PropertyCard = ({ property }) => {
           </div>
         </div>
       </div>
-    </div>
+    </Link>
   );
+
 };
 
 export default PropertyCard;
