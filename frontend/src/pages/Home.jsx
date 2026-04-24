@@ -46,10 +46,10 @@ const Home = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
     
-    // Fetch a fresh cinematic background from Unsplash API
+    // Fetch a fresh dramatic cinematic background from Unsplash API
     const fetchHero = async () => {
       try {
-        const keywords = ['luxury-villa', 'modern-penthouse', 'contemporary-architecture', 'mansion-interior'];
+        const keywords = ['luxury-villa', 'modern-penthouse', 'contemporary-architecture', 'mansion-interior', 'architectural-lighting'];
         const randomKey = keywords[Math.floor(Math.random() * keywords.length)];
         const response = await fetch(`https://source.unsplash.com/featured/2000x1200?${randomKey}`);
         if (response.url) {
@@ -59,6 +59,8 @@ const Home = () => {
         console.log("Using fallback hero image");
       }
     };
+
+
 
     fetchHero();
 
@@ -96,11 +98,13 @@ const Home = () => {
             className="w-full h-full object-cover scale-105 animate-slow-zoom transition-all duration-1000"
           />
 
-          {/* Multi-layered overlays for depth */}
+          {/* Multi-layered deep overlays for dramatic cinematic depth */}
           <div className="absolute inset-0 bg-neutral-950/30"></div>
           <div className="absolute inset-0 bg-gradient-to-b from-neutral-950/60 via-transparent to-neutral-950/40"></div>
           <div className="absolute inset-0 bg-gradient-to-r from-neutral-950/40 via-transparent to-neutral-950/40"></div>
         </div>
+
+
 
         {/* Hero Content - Refined LuxeEstate Layout */}
         <div className="container relative z-10 text-center text-white animate-fade-in px-6">
