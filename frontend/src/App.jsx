@@ -10,6 +10,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import VerifyEmail from './pages/VerifyEmail';
 import PostProperty from './pages/PostProperty';
+import Properties from './pages/Properties';
+
 
 
 
@@ -143,6 +145,8 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/add-property" element={<PostProperty />} />
+            <Route path="/properties" element={<Properties />} />
+
 
             {/* Add more routes here as we build them */}
           </Routes>
