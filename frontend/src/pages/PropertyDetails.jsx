@@ -151,22 +151,47 @@ const PropertyDetails = () => {
                 </p>
               </div>
 
-              <div className="glass p-10 rounded-[2.5rem] space-y-8">
-                <h2 className="text-2xl font-bold flex items-center gap-3">
-                  <div className="w-1.5 h-8 bg-primary rounded-full"></div>
-                  Key Features & Amenities
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="glass p-10 rounded-[2.5rem] space-y-8 overflow-hidden">
+                <div className="flex flex-between items-center pr-4">
+                  <h2 className="text-2xl font-bold flex items-center gap-3">
+                    <div className="w-1.5 h-8 bg-primary rounded-full"></div>
+                    Key Features & Amenities
+                  </h2>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => {
+                        const slider = document.getElementById('amenities-slider');
+                        slider.scrollBy({ left: -300, behavior: 'smooth' });
+                      }}
+                      className="w-10 h-10 rounded-full border border-border flex-center text-muted-foreground hover:border-primary hover:text-primary transition-all active:scale-90"
+                    >
+                      <ChevronLeft size={20} />
+                    </button>
+                    <button 
+                      onClick={() => {
+                        const slider = document.getElementById('amenities-slider');
+                        slider.scrollBy({ left: 300, behavior: 'smooth' });
+                      }}
+                      className="w-10 h-10 rounded-full border border-primary/30 flex-center text-primary hover:bg-primary hover:text-white transition-all active:scale-90"
+                    >
+                      <ChevronRight size={20} />
+                    </button>
+                  </div>
+                </div>
+                
+                <div id="amenities-slider" className="flex gap-4 overflow-x-auto pb-4 pr-10 scrollbar-hide snap-x scroll-smooth">
                   {property.features.map(feature => (
-                    <div key={feature} className="flex items-center gap-4 p-5 bg-muted/20 border border-border/30 rounded-[2rem] hover:bg-white hover:border-primary/20 transition-all group">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex-center text-primary group-hover:bg-primary group-hover:text-white transition-all">
-                        <CheckCircle2 size={18} />
+                    <div key={feature} className="flex-none w-[280px] flex items-center gap-4 p-6 bg-muted/20 border border-border/30 rounded-[2.5rem] hover:bg-white hover:border-primary/20 hover:shadow-xl transition-all group snap-start">
+                      <div className="w-12 h-12 rounded-2xl bg-primary/10 flex-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-500">
+                        <CheckCircle2 size={20} />
                       </div>
-                      <span className="font-semibold text-foreground/80">{feature}</span>
+                      <span className="font-bold text-foreground/80">{feature}</span>
                     </div>
                   ))}
                 </div>
               </div>
+
+
             </div>
 
           </div>
