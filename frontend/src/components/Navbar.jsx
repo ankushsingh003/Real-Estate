@@ -22,25 +22,25 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled ? 'glass py-3 shadow-lg' : 'bg-transparent py-5'}`}>
+    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${isScrolled ? 'glass py-3 shadow-lg' : 'bg-transparent py-6'}`}>
       <div className="container flex-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2">
-          <div className="bg-primary p-2 rounded-lg text-white">
-            <Home size={24} />
+        <Link to="/" className="flex items-center gap-3 group">
+          <div className="bg-primary p-2.5 rounded-xl text-white shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform duration-500">
+            <Home size={26} />
           </div>
-          <span className="text-xl font-bold tracking-tight text-foreground">
+          <span className={`text-2xl font-black tracking-tighter italic transition-colors duration-500 ${isScrolled ? 'text-foreground' : 'text-white'}`}>
             Luxe<span className="text-primary">Estate</span>
           </span>
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center gap-8">
+        <div className="hidden md:flex items-center gap-10">
           {navLinks.map((link) => (
             <Link 
               key={link.name} 
               to={link.path} 
-              className="text-muted-foreground hover:text-primary transition-colors font-medium flex items-center gap-2"
+              className={`text-sm font-black uppercase tracking-[0.2em] transition-all duration-500 hover:text-primary ${isScrolled ? 'text-muted-foreground' : 'text-white/80 hover:text-white'}`}
             >
               {link.name}
             </Link>
@@ -48,15 +48,16 @@ const Navbar = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="hidden md:flex items-center gap-4">
-          <Link to="/add-property" className="flex items-center gap-2 text-foreground font-medium hover:text-primary transition-colors">
-            <PlusIcon size={20} />
+        <div className="hidden md:flex items-center gap-6">
+          <Link to="/add-property" className={`flex items-center gap-2 font-bold text-xs uppercase tracking-widest transition-all duration-500 hover:text-primary ${isScrolled ? 'text-foreground' : 'text-white'}`}>
+            <PlusIcon size={18} />
             <span>Post Property</span>
           </Link>
-          <Link to="/login" className="bg-primary text-white px-6 py-2 rounded-full font-semibold hover:bg-primary-hover transition-all shadow-md hover:shadow-lg">
+          <Link to="/login" className="bg-primary text-white px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-primary-hover transition-all shadow-xl shadow-primary/20 hover:scale-105 active:scale-95">
             Sign In
           </Link>
         </div>
+
 
         {/* Mobile Menu Toggle */}
         <button 
