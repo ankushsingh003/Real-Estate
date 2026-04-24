@@ -41,15 +41,27 @@ const Home = () => {
   ]);
 
   const [loading, setLoading] = useState(true);
+  const [heroImage, setHeroImage] = useState("https://images.unsplash.com/photo-1600607687940-477a128f0a85?auto=format&fit=crop&q=80&w=2000");
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    // High-resolution architectural photography links
-    const images = [
-      "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&q=80&w=1200", // Villa
-      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=1200", // Penthouse
-      "https://images.unsplash.com/photo-1600585154340-be6199f7c096?auto=format&fit=crop&q=80&w=1200"  // Contemporary
-    ];
+    
+    // Fetch a fresh cinematic background from Unsplash API
+    const fetchHero = async () => {
+      try {
+        const keywords = ['luxury-villa', 'modern-penthouse', 'contemporary-architecture', 'mansion-interior'];
+        const randomKey = keywords[Math.floor(Math.random() * keywords.length)];
+        const response = await fetch(`https://source.unsplash.com/featured/2000x1200?${randomKey}`);
+        if (response.url) {
+          setHeroImage(response.url);
+        }
+      } catch (err) {
+        console.log("Using fallback hero image");
+      }
+    };
+
+    fetchHero();
+
 
     const updatedProperties = properties.map((prop, index) => ({
       ...prop,
@@ -71,10 +83,11 @@ const Home = () => {
         {/* Background Image with Advanced Gradient Layering */}
         <div className="absolute inset-0 z-0">
           <img 
-            src="https://images.unsplash.com/photo-1600607687940-477a128f0a85?auto=format&fit=crop&q=80&w=2000" 
+            src={heroImage} 
             alt="Luxury Home" 
-            className="w-full h-full object-cover scale-105 animate-slow-zoom"
+            className="w-full h-full object-cover scale-105 animate-slow-zoom transition-all duration-1000"
           />
+
           {/* Multi-layered overlays for depth */}
           <div className="absolute inset-0 bg-neutral-950/30"></div>
           <div className="absolute inset-0 bg-gradient-to-b from-neutral-950/60 via-transparent to-neutral-950/40"></div>
