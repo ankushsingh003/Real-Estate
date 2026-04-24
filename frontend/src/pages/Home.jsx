@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Search, Sparkles, MapPin, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Search, Sparkles, MapPin, ShieldCheck, Loader2 } from 'lucide-react';
+
 import PropertyCard from '../components/PropertyCard';
 
 const Home = () => {
@@ -86,6 +87,35 @@ const Home = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+
+  const handleSearch = async (e) => {
+    if (e) e.preventDefault();
+    if (!searchQuery.trim()) return;
+
+    setIsSearching(true);
+    try {
+      // Use OpenStreetMap Nominatim (Free & No Key Required for basic use)
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`);
+      const data = await response.json();
+
+      if (data && data.length > 0) {
+        const { lat, lon, display_name } = data[0];
+        // Redirect to properties with precise location data
+        window.location.href = `/properties?lat=${lat}&lng=${lon}&location=${encodeURIComponent(display_name)}`;
+      } else {
+        // Fallback: Just search by text if geocoding fails
+        window.location.href = `/properties?query=${encodeURIComponent(searchQuery)}`;
+      }
+    } catch (err) {
+      console.error("Geocoding error:", err);
+      window.location.href = `/properties?query=${encodeURIComponent(searchQuery)}`;
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   return (
     <div className="relative">
       {/* Cinematic Branded Hero Section */}
@@ -97,14 +127,11 @@ const Home = () => {
             alt="Luxury Home" 
             className="w-full h-full object-cover scale-105 animate-slow-zoom transition-all duration-1000"
           />
-
           {/* Multi-layered deep overlays for dramatic cinematic depth */}
           <div className="absolute inset-0 bg-neutral-950/30"></div>
           <div className="absolute inset-0 bg-gradient-to-b from-neutral-950/60 via-transparent to-neutral-950/40"></div>
           <div className="absolute inset-0 bg-gradient-to-r from-neutral-950/40 via-transparent to-neutral-950/40"></div>
         </div>
-
-
 
         {/* Hero Content - Refined LuxeEstate Layout */}
         <div className="container relative z-10 text-center text-white animate-fade-in px-6">
@@ -130,11 +157,13 @@ const Home = () => {
           {/* LuxeEstate Signature Search - Rounded & Floating */}
           <div className="max-w-5xl mx-auto relative group">
             <div className="absolute -inset-4 bg-primary/20 rounded-[3rem] blur-2xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-700"></div>
-            <div className="relative flex flex-col md:flex-row items-center gap-4 p-3 bg-white/10 backdrop-blur-2xl rounded-[2.5rem] border border-white/20 shadow-2xl">
+            <form onSubmit={handleSearch} className="relative flex flex-col md:flex-row items-center gap-4 p-3 bg-white/10 backdrop-blur-2xl rounded-[2.5rem] border border-white/20 shadow-2xl">
               <div className="flex-1 flex items-center gap-4 px-6 w-full">
                 <MapPin className="text-primary shrink-0" size={24} />
                 <input 
                   type="text" 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Enter a city, neighborhood, or specific villa..." 
                   className="w-full bg-transparent text-white placeholder:text-white/60 py-5 text-lg outline-none font-medium"
                 />
@@ -144,14 +173,19 @@ const Home = () => {
                 <ShieldCheck className="text-primary shrink-0" size={24} />
                 <span className="text-white/60 font-medium truncate">Verified Luxury Listings Only</span>
               </div>
-              <button className="w-full md:w-auto bg-primary text-white pl-8 pr-10 py-5 rounded-[2rem] font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 shadow-xl shadow-primary/30 hover:bg-primary-hover hover:scale-[1.02] active:scale-95 transition-all">
-                <Search size={20} />
-                Search Portfolio
+              <button 
+                type="submit"
+                disabled={isSearching}
+                className="w-full md:w-auto bg-primary text-white pl-8 pr-10 py-5 rounded-[2rem] font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 shadow-xl shadow-primary/30 hover:bg-primary-hover hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
+              >
+                {isSearching ? <Loader2 className="animate-spin" size={20} /> : <Search size={20} />}
+                {isSearching ? 'Analyzing...' : 'Search Portfolio'}
               </button>
-            </div>
+            </form>
           </div>
         </div>
       </section>
+
 
       {/* Featured Properties Section */}
       <section className="container py-32">
