@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { MapPin, Bed, Bath, Square, Heart, Share2, ChevronLeft, ChevronRight, CheckCircle2, User, Phone, Mail, Loader2 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
 
 const PropertyDetails = () => {
   const { id } = useParams();
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
+  const [agent, setAgent] = useState({
+    name: "Alexander Pierce",
+    role: "Luxury Real Estate Specialist",
+    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200",
+    phone: "+1 (555) 123-4567",
+    email: "alexander@luxeestate.com"
+  });
 
-  // Expanded mock data with detailed gallery
+  // Property Data
   const property = {
     id: id,
     title: "Modern Minimalist Villa",
@@ -28,20 +34,33 @@ const PropertyDetails = () => {
       "https://images.unsplash.com/photo-1533090161767-e6ffed986c88?auto=format&fit=crop&q=80&w=1200", // Ceiling/Detail
       "https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?auto=format&fit=crop&q=80&w=1200"  // Balcony/View
     ],
-    features: ["Smart Home System", "Wine Cellar", "Infinity Pool", "Home Cinema", "Solar Panels", "Gated Security", "Guest House", "Electric Car Charger"],
-    agent: {
-      name: "Alexander Pierce",
-      role: "Luxury Real Estate Specialist",
-      image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200",
-      phone: "+1 (555) 123-4567"
-    }
+    features: ["Smart Home System", "Wine Cellar", "Infinity Pool", "Home Cinema", "Solar Panels", "Gated Security", "Guest House", "Electric Car Charger"]
   };
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    const timer = setTimeout(() => setLoading(false), 1000);
-    return () => clearTimeout(timer);
-  }, []);
+    
+    const fetchAgent = async () => {
+      try {
+        const res = await fetch('https://randomuser.me/api/');
+        const data = await res.json();
+        const user = data.results[0];
+        setAgent({
+          name: `${user.name.first} ${user.name.last}`,
+          role: parseInt(id) % 2 === 0 ? "Senior Partner" : "Luxury Specialist",
+          image: user.picture.large,
+          phone: user.cell,
+          email: `${user.name.first.toLowerCase()}@luxeestate.com`
+        });
+      } catch (err) {
+        console.log("Failed to fetch agent");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAgent();
+  }, [id]);
 
   if (loading) {
     return (
@@ -72,7 +91,6 @@ const PropertyDetails = () => {
 
         {/* Gallery Section */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
-          {/* Main Large Image */}
           <div className="lg:col-span-8 group relative rounded-[2.5rem] overflow-hidden aspect-[16/9] shadow-2xl">
             <img 
               src={property.gallery[activeImage]} 
@@ -87,7 +105,6 @@ const PropertyDetails = () => {
             </div>
           </div>
 
-          {/* Thumbnails Sidebar */}
           <div className="lg:col-span-4 grid grid-cols-4 lg:grid-cols-2 gap-4 h-full">
             {property.gallery.slice(1, 7).map((img, idx) => (
               <div 
@@ -98,7 +115,6 @@ const PropertyDetails = () => {
                 <img src={img} alt="Thumbnail" className="w-full h-full object-cover aspect-square" />
               </div>
             ))}
-            {/* View More Placeholder */}
             <div className="relative rounded-3xl overflow-hidden glass flex-center flex-col gap-1 text-primary font-bold cursor-pointer hover:bg-primary/5 transition-all aspect-square border-2 border-dashed border-primary/30">
               <Plus size={24} />
               <span className="text-xs">Gallery</span>
@@ -108,7 +124,6 @@ const PropertyDetails = () => {
 
         {/* Info Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-          {/* Left: Content */}
           <div className="lg:col-span-2 space-y-12">
             <div>
               <h1 className="text-5xl font-bold mb-4 leading-tight">{property.title}</h1>
@@ -118,7 +133,6 @@ const PropertyDetails = () => {
               </div>
             </div>
 
-            {/* Structured Quick Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
                 { icon: <Bed size={24} />, label: "Beds", value: property.beds },
@@ -138,8 +152,6 @@ const PropertyDetails = () => {
               ))}
             </div>
 
-
-            {/* Structured Content Sections */}
             <div className="space-y-8">
               <div className="glass p-10 rounded-[2.5rem] space-y-6">
                 <h2 className="text-2xl font-bold flex items-center gap-3">
@@ -190,15 +202,10 @@ const PropertyDetails = () => {
                   ))}
                 </div>
               </div>
-
-
             </div>
-
           </div>
 
-          {/* Right: Sidebar */}
           <div className="space-y-8">
-            {/* Price & Book Section */}
             <div className="glass p-8 rounded-[2.5rem] shadow-xl sticky top-32">
               <div className="mb-6">
                 <span className="text-muted-foreground text-sm font-medium uppercase tracking-widest block mb-2">Asking Price</span>
@@ -214,23 +221,22 @@ const PropertyDetails = () => {
                 </button>
               </div>
 
-              {/* Agent Card */}
               <div className="pt-8 border-t border-border">
                 <div className="flex items-center gap-4 mb-6">
-                  <img src={property.agent.image} alt={property.agent.name} className="w-16 h-16 rounded-2xl object-cover" />
+                  <img src={agent.image} alt={agent.name} className="w-16 h-16 rounded-2xl object-cover" />
                   <div>
-                    <div className="font-bold text-lg">{property.agent.name}</div>
-                    <div className="text-primary text-sm font-medium">{property.agent.role}</div>
+                    <div className="font-bold text-lg">{agent.name}</div>
+                    <div className="text-primary text-sm font-medium">{agent.role}</div>
                   </div>
                 </div>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 text-muted-foreground">
                     <Phone size={18} className="text-primary" />
-                    <span>{property.agent.phone}</span>
+                    <span>{agent.phone}</span>
                   </div>
                   <div className="flex items-center gap-3 text-muted-foreground">
                     <Mail size={18} className="text-primary" />
-                    <span>alexander@luxeestate.com</span>
+                    <span className="truncate">{agent.email}</span>
                   </div>
                 </div>
               </div>
