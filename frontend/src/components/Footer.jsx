@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'lucide-react';
+import { Home, Mail, Phone, MapPin, Globe, Send, Share2, MessageCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Footer = () => {
@@ -21,7 +21,7 @@ const Footer = () => {
               Making the search for your dream home effortless and elegant. We provide the finest selection of premium real estate worldwide.
             </p>
             <div className="flex gap-4">
-              {[Facebook, Twitter, Instagram, Linkedin].map((Icon, i) => (
+              {[Globe, Send, MessageCircle, Share2].map((Icon, i) => (
                 <a key={i} href="#" className="w-10 h-10 rounded-full bg-dark-muted flex-center hover:bg-primary transition-all text-white">
                   <Icon size={20} />
                 </a>
