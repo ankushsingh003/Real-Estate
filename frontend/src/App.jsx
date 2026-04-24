@@ -12,6 +12,8 @@ import PostProperty from './pages/PostProperty';
 import Properties from './pages/Properties';
 import PropertyDetails from './pages/PropertyDetails';
 import HowItWorks from './pages/HowItWorks';
+import Concierge from './pages/Concierge';
+
 
 function App() {
   return (
@@ -29,6 +31,8 @@ function App() {
             <Route path="/properties" element={<Properties />} />
             <Route path="/property/:id" element={<PropertyDetails />} />
             <Route path="/how-it-works" element={<HowItWorks />} />
+            <Route path="/concierge" element={<Concierge />} />
+
           </Routes>
         </main>
         <Footer />

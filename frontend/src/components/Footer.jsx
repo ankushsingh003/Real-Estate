@@ -25,12 +25,42 @@ const Footer = () => {
               Redefining the art of luxury living. We connect the world's most discerning buyers with the most extraordinary architectural masterpieces.
             </p>
             <div className="flex gap-4">
-              {[Globe, Send, MessageCircle, Share2].map((Icon, i) => (
-                <a key={i} href="#" className="w-11 h-11 rounded-xl bg-white border border-border/50 flex-center hover:bg-primary hover:border-primary hover:scale-110 transition-all text-muted-foreground hover:text-white shadow-sm group">
-                  <Icon size={20} />
-                </a>
-              ))}
+              <a href="#" className="w-11 h-11 rounded-xl bg-white border border-border/50 flex-center hover:bg-primary hover:border-primary hover:scale-110 transition-all text-muted-foreground hover:text-white shadow-sm group">
+                <Globe size={20} />
+              </a>
+              <a href="#" className="w-11 h-11 rounded-xl bg-white border border-border/50 flex-center hover:bg-primary hover:border-primary hover:scale-110 transition-all text-muted-foreground hover:text-white shadow-sm group">
+                <Send size={20} />
+              </a>
+              <Link to="/concierge" className="w-11 h-11 rounded-xl bg-white border border-border/50 flex-center hover:bg-primary hover:border-primary hover:scale-110 transition-all text-muted-foreground hover:text-white shadow-sm group">
+                <MessageCircle size={20} />
+              </Link>
+
+              <button 
+                onClick={async (e) => {
+                  e.preventDefault();
+                  const shareData = {
+                    title: 'LuxeEstate',
+                    text: 'Check out these premium luxury properties on LuxeEstate!',
+                    url: window.location.href
+                  };
+
+                  try {
+                    if (navigator.share) {
+                      await navigator.share(shareData);
+                    } else {
+                      await navigator.clipboard.writeText(window.location.href);
+                      import('react-hot-toast').then(t => t.toast.success('Link copied to clipboard!'));
+                    }
+                  } catch (err) {
+                    console.log('Error sharing:', err);
+                  }
+                }}
+                className="w-11 h-11 rounded-xl bg-white border border-border/50 flex-center hover:bg-primary hover:border-primary hover:scale-110 transition-all text-muted-foreground hover:text-white shadow-sm group"
+              >
+                <Share2 size={20} />
+              </button>
             </div>
+
           </div>
 
           {/* Quick Navigation */}
