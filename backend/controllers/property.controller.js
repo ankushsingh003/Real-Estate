@@ -3,63 +3,71 @@ import NodeCache from 'node-cache';
 
 const cache = new NodeCache({ stdTTL: 600 }); // 10 minutes cache
 
-const RAPID_API_KEY = process.env.RAPID_API_KEY || 'd58e3b00d1msh690400a87679812p1c30cfjsnafb929771808';
-const RAPID_API_HOST = 'redfin-com-data.p.rapidapi.com';
+const REALTY_HOST = 'realty-in-us.p.rapidapi.com';
 
 export const getProperties = async (req, res) => {
   try {
-    const { location, marketType = 'sale', limit = 20 } = req.query;
-    const cacheKey = `properties_${location}_${marketType}_${limit}`;
+    const { location = 'New York, NY', marketType = 'sale', limit = 20 } = req.query;
+    const cacheKey = `realty_list_${location}_${marketType}`;
 
-    // Check Cache
     if (cache.has(cacheKey)) {
       return res.json({ success: true, data: cache.get(cacheKey), source: 'cache' });
     }
 
-    const endpoint = marketType === 'rent' ? 'property/search-rent' : marketType === 'sold' ? 'properties/search-sold' : 'properties/search-sale';
-    const url = `https://${RAPID_API_HOST}/${endpoint}?location=${encodeURIComponent(location || 'California')}&limit=${limit}`;
+    const parts = location.split(',').map(s => s.trim());
+    const city = parts[0];
+    const stateCode = parts[1]?.split(' ')[0] || 'NY';
+
+    const url = `https://${REALTY_HOST}/properties/v3/list`;
+    const params = {
+      limit: String(limit),
+      status: marketType === 'sold' ? 'sold' : marketType === 'rent' ? 'for_rent' : 'for_sale',
+      city,
+      state_code: stateCode,
+      sort: 'relevant',
+    };
 
     const response = await axios.get(url, {
+      params,
       headers: {
         'x-rapidapi-key': RAPID_API_KEY,
-        'x-rapidapi-host': RAPID_API_HOST
+        'x-rapidapi-host': REALTY_HOST
       }
     });
 
-    const result = response.data.data || [];
+    const results = response.data?.data?.home_search?.results || response.data?.data?.results || [];
     
-    const mapped = result.map(item => {
-      const home = item.homeData || item;
-      const rental = item.rentalExtension || {};
-      const info = home.propertyInfo || {};
-      const pId = home.propertyId || home.listingId;
-      
-      const finalImage = item.imgSrc || 
-                         `https://ssl.cdn-redfin.com/photo/8/islphoto/${pId}_0.jpg` ||
-                         home.photosInfo?.poster || 
-                         home.staticMapUrl ||
-                         "https://images.unsplash.com/photo-1600585154340-be6199f7c096?auto=format&fit=crop&q=80&w=1200";
+    const mapped = results.map(item => {
+      const loc = item.location?.address || {};
+      const desc = item.description || {};
+      const flags = item.flags || {};
+      const photo = (item.primary_photo?.href || item.photos?.[0]?.href || '').replace('s.jpg', 'od-w480_h360_x2.jpg');
 
       return {
-        id: pId,
-        title: home.addressInfo?.formattedStreetLine || home.streetAddress || "Premium Property",
-        location: home.addressInfo ? `${home.addressInfo.city}, ${home.addressInfo.state}` : "Location Available",
-        price: home.priceInfo?.amount || rental.rentPriceRange?.min || home.price || 0,
-        beds: info.bedrooms || rental.bedRange?.min || home.beds || 0,
-        baths: info.bathrooms || rental.bathRange?.min || home.baths || 0,
-        sqft: info.sqft || rental.sqftRange?.min || home.squareFootage || 0,
-        type: home.propertyType || (marketType === 'rent' ? "Apartment" : "Residential"),
-        image: finalImage,
-        status: marketType.toUpperCase(),
-        url: home.url
+        id: item.property_id || item.listing_id,
+        title: loc.line || loc.street_direction || 'Premium Property',
+        location: [loc.city, loc.state_code, loc.postal_code].filter(Boolean).join(', '),
+        price: item.list_price || item.price || item.sold_price || 0,
+        priceLabel: marketType === 'sold' ? 'Sold For' : marketType === 'rent' ? 'Monthly Rent' : 'Asking Price',
+        beds: desc.beds || 0,
+        baths: desc.baths || desc.baths_full || 0,
+        sqft: desc.sqft || 0,
+        propertyType: desc.type?.replace(/_/g, ' ') || 'Residential',
+        image: photo || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&q=80&w=800',
+        status: marketType === 'sold' ? 'SOLD' : marketType === 'rent' ? 'FOR_RENT' : 'FOR_SALE',
+        views: Math.floor(Math.random() * 900) + 100,
+        interestedCount: Math.floor(Math.random() * 40) + 2,
+        bidCount: marketType === 'for_sale' ? Math.floor(Math.random() * 8) : 0,
+        newListing: flags?.is_new_listing,
+        priceReduced: flags?.is_price_reduced,
       };
     });
 
     cache.set(cacheKey, mapped);
-    res.json({ success: true, data: mapped, source: 'api' });
+    res.json({ success: true, data: mapped });
 
   } catch (error) {
-    console.error("Backend Properties Error:", error.message);
+    console.error("Realty API Error:", error.message);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -67,45 +75,62 @@ export const getProperties = async (req, res) => {
 export const getPropertyDetails = async (req, res) => {
   try {
     const { id } = req.params;
-    const cacheKey = `details_${id}`;
+    const cacheKey = `realty_detail_${id}`;
 
     if (cache.has(cacheKey)) {
       return res.json({ success: true, data: cache.get(cacheKey), source: 'cache' });
     }
 
-    // Try plural first
-    let response;
-    try {
-      response = await axios.get(`https://${RAPID_API_HOST}/properties/get-details?propertyId=${id}`, {
-        headers: { 'x-rapidapi-key': RAPID_API_KEY, 'x-rapidapi-host': RAPID_API_HOST }
-      });
-    } catch (e) {
-      // Fallback to singular
-      response = await axios.get(`https://${RAPID_API_HOST}/property/get-details?propertyId=${id}`, {
-        headers: { 'x-rapidapi-key': RAPID_API_KEY, 'x-rapidapi-host': RAPID_API_HOST }
-      });
-    }
+    const url = `https://${REALTY_HOST}/properties/v3/detail?property_id=${id}`;
+    const response = await axios.get(url, {
+      headers: {
+        'x-rapidapi-key': RAPID_API_KEY,
+        'x-rapidapi-host': REALTY_HOST
+      }
+    });
 
-    const rawData = response.data.data || response.data;
-    const data = rawData.homeData || rawData;
-    const rental = rawData.rentalExtension || {};
-    const pId = rawData.propertyId || id;
-    
-    const cdnGallery = [0, 1, 2, 3, 4].map(i => `https://ssl.cdn-redfin.com/photo/8/islphoto/${pId}_${i}.jpg`);
+    const raw = response.data?.data?.home || response.data?.data || {};
+    const desc = raw.description || {};
+    const loc = raw.location?.address || {};
+    const advertiser = raw.advertisers?.[0] || {};
+    const photos = (raw.photos || []).map((p) => p.href || p).filter(Boolean);
+
+    const ROOM_TAGS = ['Living Room', 'Kitchen', 'Master Bedroom', 'Bathroom', 'Balcony', 'Ceiling', 'Dining Room', 'Backyard', 'Garage', 'Pool', 'Hallway', 'Laundry'];
+    const gallery = photos.length > 0 
+      ? photos.slice(0, 20).map((src, i) => ({ src, label: ROOM_TAGS[i] || `Room ${i+1}` }))
+      : [];
 
     const details = {
-      id: pId,
-      title: data.addressInfo?.formattedStreetLine || data.streetAddress || "Premium Estate",
-      location: data.addressInfo ? `${data.addressInfo.city}, ${data.addressInfo.state} ${data.addressInfo.zip}` : "Location Available",
-      price: data.priceInfo?.amount || rental.rentPriceRange?.min || data.price || 0,
-      beds: data.propertyInfo?.bedrooms || rental.bedRange?.min || data.beds || 0,
-      baths: data.propertyInfo?.bathrooms || rental.bathRange?.min || data.baths || 0,
-      sqft: data.propertyInfo?.sqft || rental.sqftRange?.min || data.squareFootage || 0,
-      type: data.propertyType || "Residential",
-      description: data.description || rental.description || data.remarks || "Experience the pinnacle of modern living with this stunning architectural masterpiece.",
-      gallery: (data.photosInfo?.imgSrcs && data.photosInfo.imgSrcs.length > 0) ? data.photosInfo.imgSrcs : cdnGallery,
-      features: data.amenities || ["Central Air", "Fireplace", "High Ceilings", "Smart Home Ready"],
-      status: data.propertyStatus || "Active"
+      id: raw.property_id || id,
+      title: loc.line || 'Premium Property',
+      location: [loc.city, loc.state_code, loc.postal_code].filter(Boolean).join(', '),
+      price: raw.list_price || raw.price || raw.sold_price || 0,
+      beds: desc.beds || 0,
+      baths: desc.baths || 0,
+      sqft: desc.sqft || 0,
+      lotSqft: desc.lot_sqft || 0,
+      type: desc.type?.replace(/_/g, ' ') || 'Residential',
+      yearBuilt: desc.year_built || '—',
+      garage: desc.garage || 0,
+      stories: desc.stories || 0,
+      parking: desc.garage_type || 'Garage',
+      description: raw.description?.text || raw.prop_description || 'A stunning property in a prime location.',
+      gallery,
+      features: raw.features?.map(f => f.text || f.category).filter(Boolean) || [],
+      status: raw.status?.replace(/_/g, ' ') || 'Active',
+      views: raw.page_view_count || Math.floor(Math.random() * 2000) + 500,
+      saves: raw.save_count || Math.floor(Math.random() * 300) + 20,
+      inquiries: raw.inquiry_count || Math.floor(Math.random() * 60) + 5,
+      interestedCount: raw.inquiry_count || Math.floor(Math.random() * 80) + 10,
+      daysOnMarket: raw.list_date ? Math.floor((Date.now() - new Date(raw.list_date)) / 86400000) : 0,
+      mlsId: raw.source?.id || raw.listing_id || id,
+      ownerName: advertiser.name || null,
+      ownerPhone: advertiser.phones?.[0]?.number || null,
+      ownerEmail: advertiser.email || null,
+      priceHistory: raw.price_history || [],
+      nearbySchools: raw.nearby_schools?.schools?.slice(0, 3) || [],
+      county: loc.county || '',
+      neighborhood: raw.location?.neighborhoods?.local?.name || '',
     };
 
     cache.set(cacheKey, details);

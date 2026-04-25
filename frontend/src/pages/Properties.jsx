@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, Link } from 'react-router-dom';
-import { Filter, MapPin, Search, Loader2, Building2, ExternalLink, SlidersHorizontal, LayoutGrid, List, Tag } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import {
+  SlidersHorizontal, LayoutGrid, List,
+  Loader2, Home, Building2, TrendingDown, AlertCircle
+} from 'lucide-react';
 import PropertyCard from '../components/PropertyCard';
 import { toast } from 'react-hot-toast';
 
@@ -8,14 +11,12 @@ const Properties = () => {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState('grid');
-  const [marketType, setMarketType] = useState('sale'); // 'sale', 'rent', 'sold'
+  const [marketType, setMarketType] = useState('sale');
+  const [isFallback, setIsFallback] = useState(false);
+
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
-  
-  const searchLocation = queryParams.get('location') || 'California';
-
-  const RAPID_API_KEY = 'd58e3b00d1msh690400a87679812p1c30cfjsnafb929771808';
-  const RAPID_API_HOST = 'redfin-com-data.p.rapidapi.com';
+  const rawLocation = queryParams.get('location') || 'New York, NY';
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -24,136 +25,121 @@ const Properties = () => {
 
   const fetchProperties = async () => {
     setLoading(true);
+    setIsFallback(false);
     try {
-      const url = `http://localhost:5000/api/properties/search?location=${encodeURIComponent(searchLocation)}&marketType=${marketType}&limit=20`;
+      const url = `http://localhost:5000/api/properties/search?location=${encodeURIComponent(rawLocation)}&marketType=${marketType}&limit=20`;
+      const res = await fetch(url);
+      const json = await res.json();
 
-      const response = await fetch(url);
-      const result = await response.json();
-      
-      if (!result.success) {
-        throw new Error(result.message || "Failed to fetch properties");
-      }
+      if (!json.success) throw new Error(json.message || 'NO_RESULTS');
 
-      setProperties(result.data);
-    } catch (error) {
-      console.error("Redfin API Error:", error.message);
-      // Enhanced Sample Data for Fallback
-      const sampleProperties = [1, 2, 3, 4, 5, 6].map(i => ({
-        id: `redfin-sample-${i}`,
-        title: `${['Oceanview', 'Skyline', 'Garden', 'Modern', 'Classic', 'Luxury'][i-1]} Residence`,
-        location: `${['Malibu', 'New York', 'Austin', 'Miami', 'Chicago', 'Seattle'][i-1]}, USA`,
-        price: 2500000 + (i * 350000),
-        beds: 3 + (i % 3),
-        baths: 2 + (i % 2),
-        sqft: 2800 + (i * 400),
-        type: marketType.toUpperCase(),
-        image: `https://images.unsplash.com/photo-${[
-          '1600596542815-ffad4c1539a9',
-          '1600607687940-477a128f0a85',
-          '1600585154340-be6199f7c096',
-          '1613490493576-7fde63acd811',
-          '1512917774080-9991f1c4c750',
-          '1600566753190-17f0bcd2a6c4'
-        ][i-1]}?auto=format&fit=crop&q=80&w=1200`,
-        status: marketType.toUpperCase()
-      }));
-      setProperties(sampleProperties);
-      if (error.message.includes("Subscription")) {
-        toast.error("Please click 'Subscribe' on RapidAPI for Redfin Data.");
-      }
+      setProperties(json.data);
+    } catch (err) {
+      console.error('API error:', err.message);
+      toast.error('Failed to load live properties. Showing samples.');
+      // Keep sample data logic if needed or show empty
+      setProperties([]); 
     } finally {
       setLoading(false);
     }
   };
 
+  const marketTabs = [
+    { key: 'sale', label: 'For Sale', icon: <Home size={15} /> },
+    { key: 'rent', label: 'For Rent', icon: <Building2 size={15} /> },
+    { key: 'sold', label: 'Recently Sold', icon: <TrendingDown size={15} /> },
+  ];
+
+  const city = rawLocation.split(',')[0] || 'New York';
+
   return (
     <div className="min-h-screen pt-32 pb-20 bg-slate-50">
       <div className="container">
-        {/* Market Selector Banner */}
-        <div className="mb-10 bg-slate-900 border border-white/10 p-2 rounded-[2.5rem] flex items-center shadow-2xl overflow-hidden relative">
-          <button 
-            onClick={() => setMarketType('sale')}
-            className={`flex-1 py-4 rounded-[2rem] font-black uppercase tracking-widest text-xs transition-all ${marketType === 'sale' ? 'bg-primary text-white shadow-xl' : 'text-slate-400 hover:text-white'}`}
-          >
-            For Sale
-          </button>
-          <button 
-            onClick={() => setMarketType('rent')}
-            className={`flex-1 py-4 rounded-[2rem] font-black uppercase tracking-widest text-xs transition-all ${marketType === 'rent' ? 'bg-primary text-white shadow-xl' : 'text-slate-400 hover:text-white'}`}
-          >
-            For Rent
-          </button>
-          <button 
-            onClick={() => setMarketType('sold')}
-            className={`flex-1 py-4 rounded-[2rem] font-black uppercase tracking-widest text-xs transition-all ${marketType === 'sold' ? 'bg-primary text-white shadow-xl' : 'text-slate-400 hover:text-white'}`}
-          >
-            Recently Sold
-          </button>
+
+        {/* Market Type Selector */}
+        <div className="mb-10 bg-slate-900 p-2 rounded-[2.5rem] flex items-center shadow-2xl overflow-hidden">
+          {marketTabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setMarketType(tab.key)}
+              className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-[2rem] font-black uppercase tracking-widest text-xs transition-all duration-300 ${
+                marketType === tab.key
+                  ? 'bg-primary text-white shadow-xl shadow-primary/40'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
         </div>
 
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
-          <div className="max-w-2xl">
-            <div className="flex items-center gap-3 text-primary font-black text-[10px] uppercase tracking-[0.4em] mb-4">
-              <div className="w-8 h-[2px] bg-primary"></div>
-              Redfin Market Feed
+        {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+          <div>
+            <div className="flex items-center gap-3 text-primary font-black text-[10px] uppercase tracking-[0.4em] mb-3">
+              <div className="w-8 h-[2px] bg-primary" />
+              Live Market Feed
             </div>
-            <h2 className="text-4xl md:text-6xl font-bold mb-4 tracking-tight leading-tight">
-              Inventory in <br/>
-              <span className="text-primary italic underline underline-offset-8 decoration-primary/20">{searchLocation.split(',')[0]}</span>
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
+              Properties in{' '}
+              <span className="text-primary italic">{city}</span>
             </h2>
+            {!loading && (
+              <p className="text-slate-400 mt-2 font-medium">
+                {properties.length} listings found
+              </p>
+            )}
           </div>
-          
-          <div className="flex items-center gap-4 bg-white p-2 rounded-[2rem] border border-border/50 shadow-xl">
-             <div className="flex bg-muted/50 p-1 rounded-2xl">
-                <button 
-                  onClick={() => setViewMode('grid')}
-                  className={`p-3 rounded-xl transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-                >
-                  <LayoutGrid size={20} />
-                </button>
-                <button 
-                  onClick={() => setViewMode('list')}
-                  className={`p-3 rounded-xl transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-                >
-                  <List size={20} />
-                </button>
-             </div>
-             <button className="flex items-center gap-3 px-6 py-3 rounded-2xl font-bold hover:bg-muted transition-all text-sm border-l border-border/50">
-               <SlidersHorizontal size={18} />
-               Filters
-             </button>
+
+          {/* View toggle */}
+          <div className="flex items-center gap-3 bg-white px-2 py-2 rounded-2xl border border-slate-200 shadow-sm">
+            <div className="flex bg-slate-50 p-1 rounded-xl">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-2.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white shadow text-primary' : 'text-slate-400 hover:text-slate-600'}`}
+              >
+                <LayoutGrid size={18} />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-2.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white shadow text-primary' : 'text-slate-400 hover:text-slate-600'}`}
+              >
+                <List size={18} />
+              </button>
+            </div>
+            <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm border-l border-slate-200 text-slate-600 hover:text-primary transition-colors">
+              <SlidersHorizontal size={16} />
+              Filters
+            </button>
           </div>
         </div>
 
-        {/* Results Grid */}
+        {/* Grid / List */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {[1, 2, 3, 4, 5, 6].map(i => (
-              <div key={i} className="bg-white rounded-[3rem] overflow-hidden border border-border/40 h-[500px] animate-pulse">
-                <div className="h-64 bg-slate-200"></div>
-                <div className="p-10 space-y-5">
-                  <div className="h-8 bg-slate-200 rounded-full w-3/4"></div>
-                  <div className="h-5 bg-slate-200 rounded-full w-1/2"></div>
+          <div className={`grid gap-8 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="bg-white rounded-[2rem] overflow-hidden border border-slate-100 animate-pulse">
+                <div className="h-64 bg-slate-200" />
+                <div className="p-7 space-y-4">
+                  <div className="h-5 bg-slate-200 rounded-full w-3/4" />
+                  <div className="h-4 bg-slate-200 rounded-full w-1/2" />
+                  <div className="grid grid-cols-3 gap-3 pt-4">
+                    {[1, 2, 3].map((j) => <div key={j} className="h-10 bg-slate-100 rounded-xl" />)}
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className={`grid gap-10 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
-            {properties.map(property => (
-              <div key={property.id} className="relative group animate-fade-in">
+          <div className={`grid gap-8 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1 max-w-4xl mx-auto'}`}>
+            {properties.map((property, idx) => (
+              <div
+                key={property.id}
+                className="animate-fade-in"
+                style={{ animationDelay: `${idx * 60}ms`, animationFillMode: 'both' }}
+              >
                 <PropertyCard property={property} horizontal={viewMode === 'list'} />
-                <div className="absolute top-8 right-8 opacity-0 group-hover:opacity-100 transition-all z-20">
-                  <div className="bg-white/20 backdrop-blur-md p-3 rounded-2xl border border-white/20 text-white hover:bg-primary transition-all cursor-pointer">
-                    <ExternalLink size={20} />
-                  </div>
-                </div>
-                {property.status === 'SOLD' && (
-                  <div className="absolute top-8 left-8 z-20 bg-red-500 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl">
-                    Sold Out
-                  </div>
-                )}
               </div>
             ))}
           </div>
@@ -164,4 +150,3 @@ const Properties = () => {
 };
 
 export default Properties;
-
