@@ -52,16 +52,23 @@ const Properties = () => {
           const home = item.homeData || item;
           const rental = item.rentalExtension || {};
           const info = home.propertyInfo || {};
+          const pId = home.propertyId || home.listingId;
           
           // Determine the most accurate image
-          // Some APIs use imgSrc, some use photosInfo.poster, some use staticMapUrl
-          const rawImage = item.imgSrc || home.photosInfo?.poster || home.staticMapUrl;
-          const finalImage = rawImage && rawImage.startsWith('http') 
-            ? rawImage 
-            : "https://images.unsplash.com/photo-1600585154340-be6199f7c096?auto=format&fit=crop&q=80&w=1200";
+          // Redfin CDN Pattern: https://ssl.cdn-redfin.com/photo/8/islphoto/{id}_0.jpg
+          let finalImage = "https://images.unsplash.com/photo-1600585154340-be6199f7c096?auto=format&fit=crop&q=80&w=1200";
+          
+          if (pId) {
+            // Priority: Real imgSrc > CDN Reconstruction > Poster > Map Fallback
+            finalImage = item.imgSrc || 
+                         `https://ssl.cdn-redfin.com/photo/8/islphoto/${pId}_0.jpg` ||
+                         home.photosInfo?.poster || 
+                         home.staticMapUrl ||
+                         finalImage;
+          }
 
           return {
-            id: item.propertyId || home.listingId || Math.random().toString(),
+            id: pId || Math.random().toString(),
             title: home.addressInfo?.formattedStreetLine || home.streetAddress || "Premium Property",
             location: home.addressInfo ? `${home.addressInfo.city}, ${home.addressInfo.state}` : "Location Available",
             
