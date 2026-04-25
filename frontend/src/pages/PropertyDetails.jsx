@@ -54,22 +54,23 @@ const PropertyDetails = () => {
       if (!response.ok) throw new Error("Failed to fetch property details");
       
       const result = await response.json();
-      const data = result.data || result;
+      const rawData = result.data || result;
+      const data = rawData.homeData || rawData;
       
       setProperty({
-        id: data.propertyId || id,
-        title: data.address?.streetAddress || data.streetAddress || "Premium Estate",
-        location: `${data.address?.city || data.city}, ${data.address?.state || data.state}`,
-        price: data.price?.value || data.price || 0,
-        beds: data.bedrooms || data.beds || 0,
-        baths: data.bathrooms || data.baths || 0,
-        sqft: data.sqft || data.squareFootage || 0,
+        id: rawData.propertyId || id,
+        title: data.addressInfo?.formattedStreetLine || data.streetAddress || "Premium Estate",
+        location: data.addressInfo ? `${data.addressInfo.city}, ${data.addressInfo.state} ${data.addressInfo.zip}` : "Location Available",
+        price: data.priceInfo?.amount || data.price || 0,
+        beds: data.propertyInfo?.bedrooms || data.beds || 0,
+        baths: data.propertyInfo?.bathrooms || data.baths || 0,
+        sqft: data.propertyInfo?.sqft || data.squareFootage || 0,
         type: data.propertyType || "Residential",
         yearBuilt: data.yearBuilt || 2022,
         parking: data.parkingType || "Attached Garage",
         description: data.description || data.remarks || "Experience the pinnacle of modern living with this stunning architectural masterpiece featuring clean lines and premium finishes throughout.",
-        gallery: (data.imgSrcs && data.imgSrcs.length > 0) ? data.imgSrcs : [
-          data.imgSrc || "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&q=80&w=1200",
+        gallery: (data.photosInfo?.imgSrcs && data.photosInfo.imgSrcs.length > 0) ? data.photosInfo.imgSrcs : [
+          data.photosInfo?.poster || "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&q=80&w=1200",
           "https://images.unsplash.com/photo-1560448204-603b3fc33ddc?auto=format&fit=crop&q=80&w=1200",
           "https://images.unsplash.com/photo-1502005229762-cf1b2da7c5d6?auto=format&fit=crop&q=80&w=1200"
         ],

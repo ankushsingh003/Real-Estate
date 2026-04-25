@@ -26,8 +26,9 @@ const Properties = () => {
     setLoading(true);
     try {
       // Endpoint logic based on market type
-      const endpoint = marketType === 'rent' ? 'search-rent' : marketType === 'sold' ? 'search-sold' : 'search-sale';
-      const url = `https://${RAPID_API_HOST}/properties/${endpoint}?location=${encodeURIComponent(searchLocation)}&limit=15`;
+      // Using singular 'property' for rent as seen in your screenshot
+      const baseEndpoint = marketType === 'rent' ? 'property/search-rent' : marketType === 'sold' ? 'properties/search-sold' : 'properties/search-sale';
+      const url = `https://${RAPID_API_HOST}/${baseEndpoint}?location=${encodeURIComponent(searchLocation)}&limit=20`;
 
       const response = await fetch(url, {
         method: 'GET',
@@ -43,23 +44,26 @@ const Properties = () => {
         throw new Error("API Subscription Required");
       }
 
-      // Redfin API usually returns data in result.data or result.results
-      const data = result.data || result.results || [];
+      // Redfin API structure based on your successful screenshot
+      const data = result.data || [];
       
       if (Array.isArray(data)) {
-        const mappedProperties = data.map(item => ({
-          id: item.propertyId || item.listingId || Math.random().toString(),
-          title: item.address?.streetAddress || item.streetAddress || "Premium Property",
-          location: `${item.address?.city || item.city}, ${item.address?.state || item.state}`,
-          price: item.price?.value || item.price || 0,
-          beds: item.bedrooms || item.beds || 0,
-          baths: item.bathrooms || item.baths || 0,
-          sqft: item.sqft || item.squareFootage || 0,
-          type: item.propertyType || "Residential",
-          image: item.imgSrc || item.poster || "https://images.unsplash.com/photo-1600585154340-be6199f7c096?auto=format&fit=crop&q=80&w=1200",
-          status: marketType.toUpperCase(),
-          url: item.url
-        }));
+        const mappedProperties = data.map(item => {
+          const home = item.homeData || item;
+          return {
+            id: item.propertyId || home.listingId || Math.random().toString(),
+            title: home.addressInfo?.formattedStreetLine || home.streetAddress || "Premium Property",
+            location: home.addressInfo ? `${home.addressInfo.city}, ${home.addressInfo.state}` : "Location Available",
+            price: home.priceInfo?.amount || home.price || 0,
+            beds: home.propertyInfo?.bedrooms || home.beds || 0,
+            baths: home.propertyInfo?.bathrooms || home.baths || 0,
+            sqft: home.propertyInfo?.sqft || home.squareFootage || 0,
+            type: home.propertyType || "Residential",
+            image: home.photosInfo?.poster || item.imgSrc || "https://images.unsplash.com/photo-1600585154340-be6199f7c096?auto=format&fit=crop&q=80&w=1200",
+            status: marketType.toUpperCase(),
+            url: home.url
+          };
+        });
         setProperties(mappedProperties);
       } else {
         throw new Error("Invalid Data Format");
