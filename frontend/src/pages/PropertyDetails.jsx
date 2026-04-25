@@ -120,7 +120,6 @@ const PropertyDetails = () => {
       setTimeout(() => setLoading(false), 800);
     }
   };
-  };
 
   const handleContactSubmit = (e) => {
     e.preventDefault();
