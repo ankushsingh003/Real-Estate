@@ -16,5 +16,9 @@ This log tracks all changes, rationale, and code modifications for the LuxeEstat
 - **Framer Motion**: To provide a premium, "wow" factor during page entry and interactions.
 - **Contact Form**: Essential for a real estate platform to capture buyer intent.
 ### Status
-- **Phase 1 (Property Details)**: Completed.
+- **Phase 1 (Property Details)**: Completed with real-world data.
+- **Phase 1.5 (API Integration)**: 
+    - Connected `Properties.jsx` to Rentcast API for live listings.
+    - Connected `PropertyDetails.jsx` to Rentcast API for authentic property data.
+    - Removed all mock simulators and hardcoded property arrays.
 - **Next Steps**: Move to Phase 2 (Seller Dashboard & Multi-step Listing Wizard).

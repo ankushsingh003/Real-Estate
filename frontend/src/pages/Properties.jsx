@@ -1,133 +1,72 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import { Filter, MapPin, Search, Loader2, Home, Building2, Landmark, Waves, Info, ExternalLink } from 'lucide-react';
+import { useLocation, Link } from 'react-router-dom';
+import { Filter, MapPin, Search, Loader2, Building2, ExternalLink, SlidersHorizontal, LayoutGrid, List } from 'lucide-react';
 import PropertyCard from '../components/PropertyCard';
 
 const Properties = () => {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState('grid');
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   
-  const searchLocation = queryParams.get('location') || 'Global';
+  const searchLocation = queryParams.get('location') || 'California';
   const lat = queryParams.get('lat');
   const lng = queryParams.get('lng');
 
+  const API_KEY = '024dd1fb131f408fb46a8da3af6f10a2';
+
   useEffect(() => {
     window.scrollTo(0, 0);
-    fetchBookingData();
+    fetchProperties();
   }, [location.search]);
 
-  const fetchBookingData = async () => {
+  const fetchProperties = async () => {
     setLoading(true);
     try {
-      // Booking.com Demand API v3.1 Configuration
-      // You can toggle between Sandbox and Production
-      const BASE_URL = 'https://demandapi-sandbox.booking.com/3.1'; // Change to production for live data
-      const AFFILIATE_ID = 'YOUR_AFFILIATE_ID'; // Drop your Affiliate ID here
-      const ACCESS_TOKEN = 'YOUR_BEARER_TOKEN'; // Drop your Bearer Token here
-
-      // Prepare Dates (Booking.com requires checkin/checkout)
-      const today = new Date();
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const dayAfterTomorrow = new Date(today);
-      dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 3);
-
-      const formatDate = (date) => date.toISOString().split('T')[0];
-
-      // Prepare Search Body for /accommodations/search
-      const searchBody = {
-        booker: {
-          country: "us",
-          platform: "desktop"
-        },
-        checkin: formatDate(tomorrow),
-        checkout: formatDate(dayAfterTomorrow),
-        guests: {
-          number_of_adults: 2,
-          number_of_rooms: 1
-        },
-        rows: 10
-      };
-
-      // Add coordinates if we have them from the Home search
-      if (lat && lng) {
-        searchBody.coordinates = {
-          latitude: parseFloat(lat),
-          longitude: parseFloat(lng),
-          radius: 10 // 10km radius search
-        };
-      } else {
-        // Fallback to city search if no coordinates
-        searchBody.city = -2140479; // Default example city (Amsterdam) if nothing searched
-      }
-
-      // Fetching from Booking.com Demand API
-      // Note: This fetch will work once you provide your real tokens
-      // I've included a robust simulator that matches the EXACT Booking.com v3.1 response 
-      // structure so the UI is ready the moment you put your keys in.
+      // Construct parameters for Rentcast API
+      // Defaulting to California if no search coordinates
+      let url = `https://api.rentcast.io/v1/listings/sale?state=CA&limit=12&status=Active`;
       
-      let finalProperties = [];
-
-      try {
-        const response = await fetch(`${BASE_URL}/accommodations/search`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Affiliate-Id': AFFILIATE_ID,
-            'Authorization': `Bearer ${ACCESS_TOKEN}`
-          },
-          body: JSON.stringify(searchBody)
-        });
-        
-        const result = await response.json();
-        
-        if (result.data) {
-          finalProperties = result.data.map(item => ({
-            id: item.id,
-            title: `Luxe Stay ${item.id}`, // Detailed name can be fetched via /details endpoint
-            location: searchLocation,
-            price: item.price?.total || 0,
-            currency: item.currency || 'USD',
-            beds: 2,
-            baths: 1,
-            sqft: 1200,
-            type: "Verified Stay",
-            image: `https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=1200`, // In v3.1 images come from /details endpoint
-            bookingUrl: item.url,
-            tag: "Official Listing"
-          }));
-        }
-      } catch (e) {
-        console.log("Simulating Booking.com v3.1 Response for development...");
-        // Simulated Exact V3.1 Response Structure
-        finalProperties = [1, 2, 3, 4, 5, 6].map(i => ({
-          id: 10000 + i,
-          title: `${searchLocation.split(',')[0]} Premium Estate ${i}`,
-          location: searchLocation,
-          price: 1250 + (i * 450),
-          currency: 'USD',
-          beds: 2 + (i % 2),
-          baths: 2,
-          sqft: 1800 + (i * 200),
-          type: "Luxury Stay",
-          image: `https://images.unsplash.com/photo-${[
-            '1600596542815-ffad4c1539a9',
-            '1600607687940-477a128f0a85',
-            '1600585154340-be6199f7c096',
-            '1613490493576-7fde63acd811',
-            '1512917774080-9991f1c4c750',
-            '1600566753190-17f0bcd2a6c4'
-          ][i % 6]}?auto=format&fit=crop&q=80&w=1200`,
-          tag: "Demand API v3.1",
-          bookingUrl: "#"
-        }));
+      if (lat && lng) {
+        url = `https://api.rentcast.io/v1/listings/sale?latitude=${lat}&longitude=${lng}&radius=20&limit=12&status=Active`;
+      } else if (searchLocation && searchLocation !== 'Global') {
+        // If we have a city name but no coords, we try to use state/city if possible
+        // For simplicity in this step, we stick to the provided coords or a default state
+        const cityPart = searchLocation.split(',')[0].trim();
+        url = `https://api.rentcast.io/v1/listings/sale?city=${encodeURIComponent(cityPart)}&limit=12&status=Active`;
       }
 
-      setProperties(finalProperties);
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'accept': 'application/json',
+          'X-Api-Key': API_KEY
+        }
+      });
+
+      const data = await response.json();
+      
+      if (Array.isArray(data)) {
+        const mappedProperties = data.map(item => ({
+          id: item.id,
+          title: item.addressLine1 || "Premium Estate",
+          location: `${item.city}, ${item.state} ${item.zipCode}`,
+          price: item.price || 0,
+          beds: item.bedrooms || 0,
+          baths: item.bathrooms || 0,
+          sqft: item.squareFootage || 0,
+          type: item.propertyType || "Single Family",
+          image: (item.images && item.images.length > 0) ? item.images[0] : "https://images.unsplash.com/photo-1600585154340-be6199f7c096?auto=format&fit=crop&q=80&w=1200",
+          status: item.status,
+          daysOnMarket: item.daysOnMarket
+        }));
+        setProperties(mappedProperties);
+      } else {
+        setProperties([]);
+      }
     } catch (error) {
-      console.error("Booking.com API Error:", error);
+      console.error("Rentcast API Error:", error);
     } finally {
       setLoading(false);
     }
@@ -136,21 +75,23 @@ const Properties = () => {
   return (
     <div className="min-h-screen pt-32 pb-20 bg-slate-50">
       <div className="container">
-        {/* API Status Banner */}
-        <div className="mb-10 bg-indigo-600/5 border border-indigo-600/20 p-5 rounded-[2rem] flex items-center justify-between animate-fade-in backdrop-blur-xl">
-          <div className="flex items-center gap-4">
-            <div className="bg-indigo-600 p-2.5 rounded-2xl text-white shadow-lg shadow-indigo-600/20">
-              <Building2 size={22} />
+        {/* Real-Time Market Status Banner */}
+        <div className="mb-10 bg-slate-900 border border-white/10 p-6 rounded-[2.5rem] flex items-center justify-between animate-fade-in shadow-2xl overflow-hidden relative group">
+          <div className="flex items-center gap-5 relative z-10">
+            <div className="bg-primary p-3.5 rounded-2xl text-white shadow-xl shadow-primary/20">
+              <Building2 size={24} />
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-600 mb-1">System Status</p>
-              <p className="text-sm text-slate-700 font-bold">Connected to <span className="italic">Booking.com Demand API v3.1</span></p>
+              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary mb-1">Live Market Data</p>
+              <p className="text-lg text-white font-serif italic">Connected to <span className="text-primary not-italic font-bold">Rentcast Real Estate Feed</span></p>
             </div>
           </div>
-          <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-green-500/10 text-green-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-green-500/20">
-            <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-            Real-Time Sync Active
+          <div className="hidden md:flex items-center gap-3 px-5 py-2.5 bg-white/5 border border-white/10 rounded-full text-[10px] font-black uppercase tracking-widest text-white relative z-10">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-lg shadow-green-500/50"></div>
+            Authentic Inventory Sync Active
           </div>
+          {/* Decorative background element */}
+          <div className="absolute top-0 right-0 w-64 h-full bg-primary/5 blur-3xl rounded-full -mr-20"></div>
         </div>
 
         {/* Header Section */}
@@ -158,48 +99,69 @@ const Properties = () => {
           <div className="max-w-2xl">
             <div className="flex items-center gap-3 text-primary font-black text-[10px] uppercase tracking-[0.4em] mb-4">
               <div className="w-8 h-[2px] bg-primary"></div>
-              Global Inventory
+              Market Listings
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight leading-tight">
-              Extraordinary stays in <br/>
+            <h2 className="text-4xl md:text-6xl font-bold mb-4 tracking-tight leading-tight">
+              Real Estates in <br/>
               <span className="text-primary italic underline underline-offset-8 decoration-primary/20">{searchLocation.split(',')[0]}</span>
             </h2>
           </div>
           
-          <button className="group bg-white border-2 border-border px-8 py-4 rounded-2xl font-bold flex items-center gap-3 hover:border-primary hover:text-primary transition-all duration-500 shadow-sm hover:shadow-xl">
-            <Filter size={20} className="group-hover:rotate-90 transition-transform" />
-            Advanced Market Filters
-          </button>
+          <div className="flex items-center gap-4 bg-white p-2 rounded-[2rem] border border-border/50 shadow-xl">
+             <div className="flex bg-muted/50 p-1 rounded-2xl">
+                <button 
+                  onClick={() => setViewMode('grid')}
+                  className={`p-3 rounded-xl transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                  <LayoutGrid size={20} />
+                </button>
+                <button 
+                  onClick={() => setViewMode('list')}
+                  className={`p-3 rounded-xl transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                  <List size={20} />
+                </button>
+             </div>
+             <button className="flex items-center gap-3 px-6 py-3 rounded-2xl font-bold hover:bg-muted transition-all text-sm border-l border-border/50">
+               <SlidersHorizontal size={18} />
+               Filters
+             </button>
+          </div>
         </div>
 
         {/* Results Grid */}
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
             {[1, 2, 3, 4, 5, 6].map(i => (
-              <div key={i} className="bg-white rounded-[2.5rem] overflow-hidden border border-border h-[480px] animate-pulse">
+              <div key={i} className="bg-white rounded-[3rem] overflow-hidden border border-border/40 h-[500px] animate-pulse">
                 <div className="h-64 bg-slate-200"></div>
-                <div className="p-8 space-y-4">
-                  <div className="h-6 bg-slate-200 rounded-full w-3/4"></div>
-                  <div className="h-4 bg-slate-200 rounded-full w-1/2"></div>
+                <div className="p-10 space-y-5">
+                  <div className="h-8 bg-slate-200 rounded-full w-3/4"></div>
+                  <div className="h-5 bg-slate-200 rounded-full w-1/2"></div>
+                  <div className="flex gap-4">
+                    <div className="h-10 bg-slate-200 rounded-xl w-full"></div>
+                    <div className="h-10 bg-slate-200 rounded-xl w-full"></div>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
+        ) : properties.length === 0 ? (
+          <div className="text-center py-32 bg-white rounded-[4rem] border-2 border-dashed border-border/50">
+            <Search className="mx-auto text-muted-foreground/30 mb-6" size={64} />
+            <h3 className="text-2xl font-bold mb-2">No Properties Found</h3>
+            <p className="text-muted-foreground">Try expanding your search radius or using a different location.</p>
+          </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+          <div className={`grid gap-10 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
             {properties.map(property => (
-              <div key={property.id} className="relative group">
-                <PropertyCard property={property} />
-                {property.bookingUrl !== "#" && (
-                  <a 
-                    href={property.bookingUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="absolute top-6 right-6 bg-white/20 backdrop-blur-md p-3 rounded-xl text-white opacity-0 group-hover:opacity-100 transition-all hover:bg-white hover:text-primary z-20"
-                  >
+              <div key={property.id} className="relative group animate-fade-in">
+                <PropertyCard property={property} horizontal={viewMode === 'list'} />
+                <div className="absolute top-8 right-8 opacity-0 group-hover:opacity-100 transition-all z-20">
+                  <div className="bg-white/20 backdrop-blur-md p-3 rounded-2xl border border-white/20 text-white hover:bg-primary transition-all cursor-pointer">
                     <ExternalLink size={20} />
-                  </a>
-                )}
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -210,3 +172,4 @@ const Properties = () => {
 };
 
 export default Properties;
+
