@@ -25,71 +25,16 @@ const Properties = () => {
   const fetchProperties = async () => {
     setLoading(true);
     try {
-      // Endpoint logic based on market type
-      // Using singular 'property' for rent as seen in your screenshot
-      const baseEndpoint = marketType === 'rent' ? 'property/search-rent' : marketType === 'sold' ? 'properties/search-sold' : 'properties/search-sale';
-      const url = `https://${RAPID_API_HOST}/${baseEndpoint}?location=${encodeURIComponent(searchLocation)}&limit=20`;
+      const url = `http://localhost:5000/api/properties/search?location=${encodeURIComponent(searchLocation)}&marketType=${marketType}&limit=20`;
 
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'x-rapidapi-key': RAPID_API_KEY,
-          'x-rapidapi-host': RAPID_API_HOST
-        }
-      });
-
+      const response = await fetch(url);
       const result = await response.json();
       
-      if (response.status === 403) {
-        throw new Error("API Subscription Required");
+      if (!result.success) {
+        throw new Error(result.message || "Failed to fetch properties");
       }
 
-      // Redfin API structure based on your successful screenshot
-      const data = result.data || [];
-      
-      if (Array.isArray(data)) {
-        const mappedProperties = data.map(item => {
-          const home = item.homeData || item;
-          const rental = item.rentalExtension || {};
-          const info = home.propertyInfo || {};
-          const pId = home.propertyId || home.listingId;
-          
-          // Determine the most accurate image
-          // Redfin CDN Pattern: https://ssl.cdn-redfin.com/photo/8/islphoto/{id}_0.jpg
-          let finalImage = "https://images.unsplash.com/photo-1600585154340-be6199f7c096?auto=format&fit=crop&q=80&w=1200";
-          
-          if (pId) {
-            // Priority: Real imgSrc > CDN Reconstruction > Poster > Map Fallback
-            finalImage = item.imgSrc || 
-                         `https://ssl.cdn-redfin.com/photo/8/islphoto/${pId}_0.jpg` ||
-                         home.photosInfo?.poster || 
-                         home.staticMapUrl ||
-                         finalImage;
-          }
-
-          return {
-            id: pId || Math.random().toString(),
-            title: home.addressInfo?.formattedStreetLine || home.streetAddress || "Premium Property",
-            location: home.addressInfo ? `${home.addressInfo.city}, ${home.addressInfo.state}` : "Location Available",
-            
-            // Handle both Sale and Rental pricing
-            price: home.priceInfo?.amount || rental.rentPriceRange?.min || home.price || 0,
-            
-            // Handle both Sale and Rental specs
-            beds: info.bedrooms || rental.bedRange?.min || home.beds || 0,
-            baths: info.bathrooms || rental.bathRange?.min || home.baths || 0,
-            sqft: info.sqft || rental.sqftRange?.min || home.squareFootage || 0,
-            
-            type: home.propertyType || (marketType === 'rent' ? "Apartment" : "Residential"),
-            image: finalImage,
-            status: marketType.toUpperCase(),
-            url: home.url
-          };
-        });
-        setProperties(mappedProperties);
-      } else {
-        throw new Error("Invalid Data Format");
-      }
+      setProperties(result.data);
     } catch (error) {
       console.error("Redfin API Error:", error.message);
       // Enhanced Sample Data for Fallback

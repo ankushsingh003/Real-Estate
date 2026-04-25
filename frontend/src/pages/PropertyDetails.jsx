@@ -41,53 +41,15 @@ const PropertyDetails = () => {
   const fetchPropertyDetails = async () => {
     setLoading(true);
     try {
-      // Trying plural endpoint which is more common in this specific Redfin RapidAPI
-      const url = `https://${RAPID_API_HOST}/properties/get-details?propertyId=${id}`;
-
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'x-rapidapi-key': RAPID_API_KEY,
-          'x-rapidapi-host': RAPID_API_HOST
-        }
-      });
-
+      const url = `http://localhost:5000/api/properties/details/${id}`;
+      const response = await fetch(url);
       const result = await response.json();
       
-      // If the primary endpoint fails, try the alternative
-      let finalResult = result;
-      if (!response.ok || !result.data) {
-         const altUrl = `https://${RAPID_API_HOST}/property/get-details?propertyId=${id}`;
-         const altRes = await fetch(altUrl, {
-            headers: { 'x-rapidapi-key': RAPID_API_KEY, 'x-rapidapi-host': RAPID_API_HOST }
-         });
-         finalResult = await altRes.json();
+      if (!result.success) {
+        throw new Error(result.message || "Failed to fetch property details");
       }
 
-      const rawData = finalResult.data || finalResult;
-      const data = rawData.homeData || rawData;
-      const rental = rawData.rentalExtension || {};
-      
-      // CDN Photo Reconstruction for Gallery
-      const pId = rawData.propertyId || id;
-      const cdnGallery = [0, 1, 2, 3, 4].map(i => `https://ssl.cdn-redfin.com/photo/8/islphoto/${pId}_${i}.jpg`);
-
-      setProperty({
-        id: pId,
-        title: data.addressInfo?.formattedStreetLine || data.streetAddress || "Premium Estate",
-        location: data.addressInfo ? `${data.addressInfo.city}, ${data.addressInfo.state} ${data.addressInfo.zip}` : "Location Available",
-        price: data.priceInfo?.amount || rental.rentPriceRange?.min || data.price || 0,
-        beds: data.propertyInfo?.bedrooms || rental.bedRange?.min || data.beds || 0,
-        baths: data.propertyInfo?.bathrooms || rental.bathRange?.min || data.baths || 0,
-        sqft: data.propertyInfo?.sqft || rental.sqftRange?.min || data.squareFootage || 0,
-        type: data.propertyType || "Residential",
-        yearBuilt: data.yearBuilt || 2022,
-        parking: data.parkingType || "Attached Garage",
-        description: data.description || rental.description || data.remarks || "Experience the pinnacle of modern living with this stunning architectural masterpiece featuring clean lines and premium finishes throughout.",
-        gallery: (data.photosInfo?.imgSrcs && data.photosInfo.imgSrcs.length > 0) ? data.photosInfo.imgSrcs : cdnGallery,
-        features: data.amenities || ["Central Air", "Fireplace", "High Ceilings", "Smart Home Ready", "Gated Access"],
-        status: data.propertyStatus || "Active"
-      });
+      setProperty(result.data);
 
       // Fetch random agent for flavor
       const agentRes = await fetch('https://randomuser.me/api/');
