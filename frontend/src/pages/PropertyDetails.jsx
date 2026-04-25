@@ -54,6 +54,10 @@ const PropertyDetails = () => {
       
       const data = await response.json();
       
+      if (!response.ok || data.status === 401) {
+        throw new Error(data.message || "Subscription Inactive");
+      }
+      
       setProperty({
         id: data.id,
         title: data.addressLine1 || "Premium Estate",
@@ -89,8 +93,29 @@ const PropertyDetails = () => {
       });
 
     } catch (err) {
-      console.error("Rentcast Detail Error:", err);
-      toast.error("Failed to load property details");
+      console.error("Rentcast Detail Error:", err.message);
+      // Fallback to high-fidelity sample data
+      setProperty({
+        id: id,
+        title: "Luxe Coastal Mansion",
+        location: "Malibu, California",
+        price: 4500000,
+        beds: 5,
+        baths: 4,
+        sqft: 5200,
+        type: "Sample Property",
+        yearBuilt: 2022,
+        parking: "3 Car Garage",
+        description: "This stunning coastal mansion offers breathtaking views of the Pacific Ocean. With floor-to-ceiling glass walls and a sprawling infinity pool, it represents the ultimate in California luxury living.",
+        gallery: [
+          "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&q=80&w=1200",
+          "https://images.unsplash.com/photo-1600585154340-be6199f7c096?auto=format&fit=crop&q=80&w=1200",
+          "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=1200"
+        ],
+        features: ["Ocean View", "Infinity Pool", "Wine Cellar", "Gated Security", "Smart Home"],
+        status: "Active"
+      });
+      toast.error("Using Sample Listing: Activate Rentcast for real data.");
     } finally {
       setTimeout(() => setLoading(false), 800);
     }

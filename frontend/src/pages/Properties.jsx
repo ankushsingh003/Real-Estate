@@ -47,26 +47,49 @@ const Properties = () => {
 
       const data = await response.json();
       
-      if (Array.isArray(data)) {
-        const mappedProperties = data.map(item => ({
-          id: item.id,
-          title: item.addressLine1 || "Premium Estate",
-          location: `${item.city}, ${item.state} ${item.zipCode}`,
-          price: item.price || 0,
-          beds: item.bedrooms || 0,
-          baths: item.bathrooms || 0,
-          sqft: item.squareFootage || 0,
-          type: item.propertyType || "Single Family",
-          image: (item.images && item.images.length > 0) ? item.images[0] : "https://images.unsplash.com/photo-1600585154340-be6199f7c096?auto=format&fit=crop&q=80&w=1200",
-          status: item.status,
-          daysOnMarket: item.daysOnMarket
-        }));
-        setProperties(mappedProperties);
-      } else {
-        setProperties([]);
+      if (response.status === 401 || !Array.isArray(data)) {
+        throw new Error(data.message || "Subscription Inactive");
       }
+
+      const mappedProperties = data.map(item => ({
+        id: item.id,
+        title: item.addressLine1 || "Premium Estate",
+        location: `${item.city}, ${item.state} ${item.zipCode}`,
+        price: item.price || 0,
+        beds: item.bedrooms || 0,
+        baths: item.bathrooms || 0,
+        sqft: item.squareFootage || 0,
+        type: item.propertyType || "Single Family",
+        image: (item.images && item.images.length > 0) ? item.images[0] : "https://images.unsplash.com/photo-1600585154340-be6199f7c096?auto=format&fit=crop&q=80&w=1200",
+        status: item.status,
+        daysOnMarket: item.daysOnMarket
+      }));
+      setProperties(mappedProperties);
     } catch (error) {
-      console.error("Rentcast API Error:", error);
+      console.error("Rentcast API Error:", error.message);
+      // Fallback to high-fidelity sample data if API fails
+      const sampleProperties = [1, 2, 3, 4, 5, 6].map(i => ({
+        id: `sample-${i}`,
+        title: `Luxe ${['Manor', 'Villa', 'Penthouse', 'Estate', 'Retreat', 'Mansion'][i-1]}`,
+        location: `Sample Area ${i}, CA`,
+        price: 1500000 + (i * 250000),
+        beds: 3 + (i % 2),
+        baths: 2 + (i % 2),
+        sqft: 2500 + (i * 300),
+        type: "Sample Data",
+        image: `https://images.unsplash.com/photo-${[
+          '1600596542815-ffad4c1539a9',
+          '1600607687940-477a128f0a85',
+          '1600585154340-be6199f7c096',
+          '1613490493576-7fde63acd811',
+          '1512917774080-9991f1c4c750',
+          '1600566753190-17f0bcd2a6c4'
+        ][i-1]}?auto=format&fit=crop&q=80&w=1200`,
+        status: "Active",
+        daysOnMarket: i * 2
+      }));
+      setProperties(sampleProperties);
+      toast.error("Using Sample Data: Please activate Rentcast subscription.");
     } finally {
       setLoading(false);
     }
