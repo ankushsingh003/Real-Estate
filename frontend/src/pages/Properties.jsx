@@ -50,16 +50,31 @@ const Properties = () => {
       if (Array.isArray(data)) {
         const mappedProperties = data.map(item => {
           const home = item.homeData || item;
+          const rental = item.rentalExtension || {};
+          const info = home.propertyInfo || {};
+          
+          // Determine the most accurate image
+          // Some APIs use imgSrc, some use photosInfo.poster, some use staticMapUrl
+          const rawImage = item.imgSrc || home.photosInfo?.poster || home.staticMapUrl;
+          const finalImage = rawImage && rawImage.startsWith('http') 
+            ? rawImage 
+            : "https://images.unsplash.com/photo-1600585154340-be6199f7c096?auto=format&fit=crop&q=80&w=1200";
+
           return {
             id: item.propertyId || home.listingId || Math.random().toString(),
             title: home.addressInfo?.formattedStreetLine || home.streetAddress || "Premium Property",
             location: home.addressInfo ? `${home.addressInfo.city}, ${home.addressInfo.state}` : "Location Available",
-            price: home.priceInfo?.amount || home.price || 0,
-            beds: home.propertyInfo?.bedrooms || home.beds || 0,
-            baths: home.propertyInfo?.bathrooms || home.baths || 0,
-            sqft: home.propertyInfo?.sqft || home.squareFootage || 0,
-            type: home.propertyType || "Residential",
-            image: home.photosInfo?.poster || item.imgSrc || "https://images.unsplash.com/photo-1600585154340-be6199f7c096?auto=format&fit=crop&q=80&w=1200",
+            
+            // Handle both Sale and Rental pricing
+            price: home.priceInfo?.amount || rental.rentPriceRange?.min || home.price || 0,
+            
+            // Handle both Sale and Rental specs
+            beds: info.bedrooms || rental.bedRange?.min || home.beds || 0,
+            baths: info.bathrooms || rental.bathRange?.min || home.baths || 0,
+            sqft: info.sqft || rental.sqftRange?.min || home.squareFootage || 0,
+            
+            type: home.propertyType || (marketType === 'rent' ? "Apartment" : "Residential"),
+            image: finalImage,
             status: marketType.toUpperCase(),
             url: home.url
           };
