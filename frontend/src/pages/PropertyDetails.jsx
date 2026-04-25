@@ -30,7 +30,8 @@ const PropertyDetails = () => {
     message: 'I am interested in this property and would like to learn more.'
   });
 
-  const API_KEY = '024dd1fb131f408fb46a8da3af6f10a2';
+  const RAPID_API_KEY = 'd58e3b00d1msh690400a87679812p1c30cfjsnafb929771808';
+  const RAPID_API_HOST = 'redfin-com-data.p.rapidapi.com';
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -40,44 +41,40 @@ const PropertyDetails = () => {
   const fetchPropertyDetails = async () => {
     setLoading(true);
     try {
-      // Fetch details for the specific property from Rentcast
-      // Note: Rentcast ID usually refers to the internal ID from their listings search
-      const response = await fetch(`https://api.rentcast.io/v1/listings/sale/${id}`, {
+      const url = `https://${RAPID_API_HOST}/property/get-details?propertyId=${id}`;
+
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
-          'accept': 'application/json',
-          'X-Api-Key': API_KEY
+          'x-rapidapi-key': RAPID_API_KEY,
+          'x-rapidapi-host': RAPID_API_HOST
         }
       });
 
       if (!response.ok) throw new Error("Failed to fetch property details");
       
-      const data = await response.json();
-      
-      if (!response.ok || data.status === 401) {
-        throw new Error(data.message || "Subscription Inactive");
-      }
+      const result = await response.json();
+      const data = result.data || result;
       
       setProperty({
-        id: data.id,
-        title: data.addressLine1 || "Premium Estate",
-        location: `${data.city}, ${data.state} ${data.zipCode}`,
-        price: data.price || 0,
-        beds: data.bedrooms || 0,
-        baths: data.bathrooms || 0,
-        sqft: data.squareFootage || 0,
-        type: data.propertyType || "Single Family",
-        yearBuilt: data.yearBuilt || 2020,
+        id: data.propertyId || id,
+        title: data.address?.streetAddress || data.streetAddress || "Premium Estate",
+        location: `${data.address?.city || data.city}, ${data.address?.state || data.state}`,
+        price: data.price?.value || data.price || 0,
+        beds: data.bedrooms || data.beds || 0,
+        baths: data.bathrooms || data.baths || 0,
+        sqft: data.sqft || data.squareFootage || 0,
+        type: data.propertyType || "Residential",
+        yearBuilt: data.yearBuilt || 2022,
         parking: data.parkingType || "Attached Garage",
-        description: data.description || "No description available for this luxury property. Experience the pinnacle of modern living with this stunning architectural masterpiece featuring clean lines and premium finishes throughout.",
-        gallery: (data.images && data.images.length > 0) ? data.images : [
-          "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&q=80&w=1200",
+        description: data.description || data.remarks || "Experience the pinnacle of modern living with this stunning architectural masterpiece featuring clean lines and premium finishes throughout.",
+        gallery: (data.imgSrcs && data.imgSrcs.length > 0) ? data.imgSrcs : [
+          data.imgSrc || "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&q=80&w=1200",
           "https://images.unsplash.com/photo-1560448204-603b3fc33ddc?auto=format&fit=crop&q=80&w=1200",
           "https://images.unsplash.com/photo-1502005229762-cf1b2da7c5d6?auto=format&fit=crop&q=80&w=1200"
         ],
-        features: data.features || ["Central Air", "Fireplace", "High Ceilings", "Smart Home Ready", "Gated Access"],
-        lastSaleDate: data.lastSaleDate,
-        status: data.status || "Active"
+        features: data.amenities || ["Central Air", "Fireplace", "High Ceilings", "Smart Home Ready", "Gated Access"],
+        status: data.propertyStatus || "Active"
       });
 
       // Fetch random agent for flavor
@@ -86,39 +83,42 @@ const PropertyDetails = () => {
       const user = agentData.results[0];
       setAgent({
         name: `${user.name.first} ${user.name.last}`,
-        role: "Senior Real Estate Advisor",
+        role: "Senior Redfin Advisor",
         image: user.picture.large,
         phone: user.cell,
         email: `${user.name.first.toLowerCase()}@luxeestate.com`
       });
 
     } catch (err) {
-      console.error("Rentcast Detail Error:", err.message);
+      console.error("Redfin Detail Error:", err.message);
       // Fallback to high-fidelity sample data
       setProperty({
         id: id,
-        title: "Luxe Coastal Mansion",
-        location: "Malibu, California",
-        price: 4500000,
-        beds: 5,
-        baths: 4,
-        sqft: 5200,
-        type: "Sample Property",
-        yearBuilt: 2022,
-        parking: "3 Car Garage",
-        description: "This stunning coastal mansion offers breathtaking views of the Pacific Ocean. With floor-to-ceiling glass walls and a sprawling infinity pool, it represents the ultimate in California luxury living.",
+        title: "Luxe Modern Residence",
+        location: "Premium Location, USA",
+        price: 3250000,
+        beds: 4,
+        baths: 3,
+        sqft: 4500,
+        type: "RapidAPI Sample",
+        yearBuilt: 2023,
+        parking: "Private Garage",
+        description: "This is high-fidelity sample data shown because the RapidAPI subscription for Redfin data needs to be activated. Once subscribed, you will see real-time Redfin property analytics.",
         gallery: [
           "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&q=80&w=1200",
           "https://images.unsplash.com/photo-1600585154340-be6199f7c096?auto=format&fit=crop&q=80&w=1200",
           "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=1200"
         ],
-        features: ["Ocean View", "Infinity Pool", "Wine Cellar", "Gated Security", "Smart Home"],
-        status: "Active"
+        features: ["Modern Design", "Smart Home", "Energy Efficient", "Gated Access"],
+        status: "ACTIVE"
       });
-      toast.error("Using Sample Listing: Activate Rentcast for real data.");
+      if (err.message.includes("Subscription") || err.message.includes("403")) {
+        toast.error("Please click 'Subscribe' on RapidAPI Redfin page.");
+      }
     } finally {
       setTimeout(() => setLoading(false), 800);
     }
+  };
   };
 
   const handleContactSubmit = (e) => {
