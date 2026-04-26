@@ -29,20 +29,33 @@ const Properties = () => {
     try {
       const url = `http://localhost:5000/api/properties/search?location=${encodeURIComponent(rawLocation)}&marketType=${marketType}&limit=20`;
       const res = await fetch(url);
-      const json = await res.json();
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || `Server Error ${res.status}`);
+      }
 
-      if (!json.success) throw new Error(json.message || 'NO_RESULTS');
+      const json = await res.json();
+      if (!json.success || !json.data || json.data.length === 0) {
+        throw new Error('NO_RESULTS');
+      }
 
       setProperties(json.data);
     } catch (err) {
-      console.error('API error:', err.message);
-      toast.error('Failed to load live properties. Showing samples.');
-      // Keep sample data logic if needed or show empty
-      setProperties([]); 
+      console.error('Property Fetch Error:', err.message);
+      toast.error(`Live properties unavailable: ${err.message}. Showing samples.`);
+      setProperties(FALLBACK_PROPERTIES(marketType));
+      setIsFallback(true);
     } finally {
       setLoading(false);
     }
   };
+
+  const FALLBACK_PROPERTIES = (type) => [
+    { id: 'f1', title: 'Luxe Modern Villa', location: 'Beverly Hills, CA', price: 4500000, beds: 5, baths: 4, sqft: 5200, propertyType: 'Villa', image: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&q=80&w=800', status: type.toUpperCase(), interestedCount: 42 },
+    { id: 'f2', title: 'Skyline Penthouse', location: 'Manhattan, NY', price: 8200000, beds: 3, baths: 3, sqft: 3400, propertyType: 'Penthouse', image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=800', status: type.toUpperCase(), interestedCount: 18 },
+    { id: 'f3', title: 'Garden Retreat', location: 'Austin, TX', price: 1200000, beds: 4, baths: 2, sqft: 2800, propertyType: 'Residential', image: 'https://images.unsplash.com/photo-1600585154340-be6199f7c096?auto=format&fit=crop&q=80&w=800', status: type.toUpperCase(), interestedCount: 25 }
+  ];
 
   const marketTabs = [
     { key: 'sale', label: 'For Sale', icon: <Home size={15} /> },
