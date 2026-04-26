@@ -170,8 +170,13 @@ const PropertyDetails = () => {
                   <div className="flex items-center gap-2 text-slate-500"><MapPin size={16} />{property.location}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-[10px] text-primary font-black uppercase tracking-widest">Asking Price</div>
-                  <div className="text-3xl font-black text-slate-900">${property.price.toLocaleString()}</div>
+                  <div className="text-[10px] text-primary font-black uppercase tracking-widest">
+                    {property.status === 'FOR_RENT' ? 'Monthly Rent' : 'Asking Price'}
+                  </div>
+                  <div className="text-3xl font-black text-slate-900">
+                    ${property.price.toLocaleString()}
+                    {property.status === 'FOR_RENT' && <span className="text-sm text-slate-400 font-bold"> /mo</span>}
+                  </div>
                 </div>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -207,14 +212,28 @@ const PropertyDetails = () => {
               </div>
             </div>
 
-            {/* Bidding Section */}
+            {/* Bid / Application Section */}
             <div className="bg-slate-900 rounded-[2rem] p-8 text-white shadow-xl relative overflow-hidden">
               <div className="relative z-10">
-                <h2 className="text-xl font-bold mb-1 flex items-center gap-2"><DollarSign size={20} className="text-primary" />Place a Bid</h2>
-                <p className="text-slate-400 text-sm mb-6">Current asking: <span className="text-white font-black">${property.price.toLocaleString()}</span></p>
+                <h2 className="text-xl font-bold mb-1 flex items-center gap-2">
+                  <DollarSign size={20} className="text-primary" />
+                  {property.status === 'FOR_RENT' ? 'Rental Application' : 'Place a Bid'}
+                </h2>
+                <p className="text-slate-400 text-sm mb-6">
+                  {property.status === 'FOR_RENT' ? 'Interested in renting?' : 'Current asking:'} 
+                  <span className="text-white font-black ml-1">${property.price.toLocaleString()}{property.status === 'FOR_RENT' ? '/mo' : ''}</span>
+                </p>
                 <form onSubmit={handleBidSubmit} className="flex gap-3 mb-6 flex-wrap">
-                  <input type="text" placeholder="Your bid amount..." value={bidAmount} onChange={(e)=>setBidAmount(e.target.value)} className="flex-1 bg-white/10 border border-white/20 rounded-2xl px-6 py-3.5 text-white font-bold outline-none focus:border-primary" />
-                  <button type="submit" className="px-8 py-3.5 bg-primary rounded-2xl font-black uppercase text-xs">Submit Bid</button>
+                  <input 
+                    type="text" 
+                    placeholder={property.status === 'FOR_RENT' ? 'Offer monthly rent...' : 'Your bid amount...'} 
+                    value={bidAmount} 
+                    onChange={(e)=>setBidAmount(e.target.value)} 
+                    className="flex-1 bg-white/10 border border-white/20 rounded-2xl px-6 py-3.5 text-white font-bold outline-none focus:border-primary" 
+                  />
+                  <button type="submit" className="px-8 py-3.5 bg-primary rounded-2xl font-black uppercase text-xs">
+                    {property.status === 'FOR_RENT' ? 'Apply Now' : 'Submit Bid'}
+                  </button>
                 </form>
                 <div className="space-y-2">
                   {bids.map((bid, i) => (
