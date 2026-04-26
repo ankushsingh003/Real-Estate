@@ -31,12 +31,13 @@ export const getProperties = async (req, res) => {
       }
     };
 
-    // If location is a 5-digit number, treat as postal_code
-    if (/^\d{5}$/.test(location)) {
-      body.postal_code = location;
+    // Improved Location Logic: Handle 'United States' or empty searches
+    const searchLocation = (location && location.toLowerCase() !== 'united states') ? location : 'Los Angeles, CA';
+
+    if (/^\d{5}$/.test(searchLocation)) {
+      body.postal_code = searchLocation;
     } else {
-      // Fallback to city/state parsing if it's a string
-      const parts = location.split(',').map(s => s.trim());
+      const parts = searchLocation.split(',').map(s => s.trim());
       body.city = parts[0];
       if (parts[1]) body.state_code = parts[1].split(' ')[0];
     }

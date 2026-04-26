@@ -16,7 +16,7 @@ const Properties = () => {
 
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
-  const rawLocation = queryParams.get('location') || 'New York, NY';
+  const rawLocation = queryParams.get('location') || 'Los Angeles, CA';
 
   useEffect(() => {
     window.scrollTo(0, 0);
