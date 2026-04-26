@@ -7,30 +7,41 @@ const REALTY_HOST = 'realty-in-us.p.rapidapi.com';
 
 export const getProperties = async (req, res) => {
   try {
-    const { location = 'New York, NY', marketType = 'sale', limit = 20 } = req.query;
-    const cacheKey = `realty_list_${location}_${marketType}`;
+    const { location = '90004', marketType = 'sale', limit = 40 } = req.query;
+    const cacheKey = `realty_list_v3_${location}_${marketType}`;
 
     if (cache.has(cacheKey)) {
       return res.json({ success: true, data: cache.get(cacheKey), source: 'cache' });
     }
 
-    const parts = location.split(',').map(s => s.trim());
-    const city = parts[0];
-    const stateCode = parts[1]?.split(' ')[0] || 'NY';
-
+    // New POST endpoint from user screenshot
     const url = `https://${REALTY_HOST}/properties/v3/list`;
-    const params = {
-      limit: String(limit),
-      status: marketType === 'sold' ? 'sold' : marketType === 'rent' ? 'for_rent' : 'for_sale',
-      city,
-      state_code: stateCode,
-      sort: 'relevant',
+    
+    // Constructing body as shown in user screenshot
+    const body = {
+      limit: Number(limit),
+      offset: 0,
+      status: marketType === 'rent' ? ['for_rent'] : marketType === 'sold' ? ['sold'] : ['for_sale', 'ready_to_build'],
+      sort: {
+        direction: "desc",
+        field: "list_date"
+      }
     };
 
-    const response = await axios.get(url, {
-      params,
+    // If location is a 5-digit number, treat as postal_code
+    if (/^\d{5}$/.test(location)) {
+      body.postal_code = location;
+    } else {
+      // Fallback to city/state parsing if it's a string
+      const parts = location.split(',').map(s => s.trim());
+      body.city = parts[0];
+      if (parts[1]) body.state_code = parts[1].split(' ')[0];
+    }
+
+    const response = await axios.post(url, body, {
       headers: {
-        'x-rapidapi-key': RAPID_API_KEY,
+        'Content-Type': 'application/json',
+        'x-rapidapi-key': process.env.RAPID_API_KEY,
         'x-rapidapi-host': REALTY_HOST
       }
     });
@@ -57,7 +68,7 @@ export const getProperties = async (req, res) => {
         status: marketType === 'sold' ? 'SOLD' : marketType === 'rent' ? 'FOR_RENT' : 'FOR_SALE',
         views: Math.floor(Math.random() * 900) + 100,
         interestedCount: Math.floor(Math.random() * 40) + 2,
-        bidCount: marketType === 'for_sale' ? Math.floor(Math.random() * 8) : 0,
+        bidCount: marketType === 'sale' ? Math.floor(Math.random() * 8) : 0,
         newListing: flags?.is_new_listing,
         priceReduced: flags?.is_price_reduced,
       };
@@ -67,8 +78,8 @@ export const getProperties = async (req, res) => {
     res.json({ success: true, data: mapped });
 
   } catch (error) {
-    console.error("Realty API Error:", error.message);
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Realty API Search Error:", error.response?.data || error.message);
+    res.status(500).json({ success: false, message: error.response?.data?.message || error.message });
   }
 };
 
@@ -84,7 +95,7 @@ export const getPropertyDetails = async (req, res) => {
     const url = `https://${REALTY_HOST}/properties/v3/detail?property_id=${id}`;
     const response = await axios.get(url, {
       headers: {
-        'x-rapidapi-key': RAPID_API_KEY,
+        'x-rapidapi-key': process.env.RAPID_API_KEY,
         'x-rapidapi-host': REALTY_HOST
       }
     });
