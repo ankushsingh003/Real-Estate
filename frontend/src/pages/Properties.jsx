@@ -44,19 +44,13 @@ const Properties = () => {
       setProperties(json.data);
     } catch (err) {
       console.error('Property Fetch Error:', err.message);
-      toast.error(`Live properties unavailable: ${err.message}. Showing samples.`);
-      setProperties(FALLBACK_PROPERTIES(marketType));
+      toast.error(`Live properties unavailable: ${err.message}. Please check your connection.`);
+      setProperties([]);
       setIsFallback(true);
     } finally {
       setLoading(false);
     }
   };
-
-  const FALLBACK_PROPERTIES = (type) => [
-    { id: 'f1', title: 'Luxe Modern Villa', location: 'Beverly Hills, CA', price: 4500000, beds: 5, baths: 4, sqft: 5200, propertyType: 'Villa', image: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&q=80&w=800', status: type.toUpperCase(), interestedCount: 42 },
-    { id: 'f2', title: 'Skyline Penthouse', location: 'Manhattan, NY', price: 8200000, beds: 3, baths: 3, sqft: 3400, propertyType: 'Penthouse', image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=800', status: type.toUpperCase(), interestedCount: 18 },
-    { id: 'f3', title: 'Garden Retreat', location: 'Austin, TX', price: 1200000, beds: 4, baths: 2, sqft: 2800, propertyType: 'Residential', image: 'https://images.unsplash.com/photo-1600585154340-be6199f7c096?auto=format&fit=crop&q=80&w=800', status: type.toUpperCase(), interestedCount: 25 }
-  ];
 
   const marketTabs = [
     { key: 'sale', label: 'For Sale', icon: <Home size={15} /> },

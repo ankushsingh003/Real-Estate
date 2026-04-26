@@ -8,30 +8,25 @@ const REALTY_HOST = 'realty-in-us.p.rapidapi.com';
 export const getProperties = async (req, res) => {
   try {
     const { location = '90004', marketType = 'sale', limit = 40 } = req.query;
-    const cacheKey = `v3_list_${marketType}_${location.replace(/\s+/g, '_')}`;
-
-    console.log(`[API Search] Fetching ${marketType} properties for ${location}...`);
+    const cacheKey = `v3_final_${marketType}_${location.replace(/\s+/g, '_')}`;
 
     if (cache.has(cacheKey)) {
       console.log(`[Cache Hit] Serving ${marketType} data for ${location}`);
       return res.json({ success: true, data: cache.get(cacheKey) });
     }
 
+    console.log(`[API Search] Fetching FRESH ${marketType} properties for ${location}...`);
+
     // New POST endpoint from user screenshot
     const url = `https://${REALTY_HOST}/properties/v3/list`;
     
-    // Constructing body as shown in user screenshot
     const body = {
       limit: Number(limit),
       offset: 0,
-      status: marketType === 'rent' ? ['for_rent'] : marketType === 'sold' ? ['sold'] : ['for_sale', 'ready_to_build'],
-      sort: {
-        direction: "desc",
-        field: "list_date"
-      }
+      status: marketType === 'rent' ? ['for_rent'] : marketType === 'sold' ? ['sold'] : ['for_sale'],
+      sort: { direction: "desc", field: "list_date" }
     };
 
-    // Improved Location Logic: Handle 'United States' or empty searches
     const searchLocation = (location && location.toLowerCase() !== 'united states') ? location : 'Los Angeles, CA';
 
     if (/^\d{5}$/.test(searchLocation)) {
@@ -52,11 +47,18 @@ export const getProperties = async (req, res) => {
 
     const results = response.data?.data?.home_search?.results || response.data?.data?.results || [];
     
+    if (results.length === 0) {
+      console.warn(`[API Warning] No results returned for ${searchLocation} (${marketType})`);
+    }
+
     const mapped = results.map(item => {
       const loc = item.location?.address || {};
       const desc = item.description || {};
       const flags = item.flags || {};
-      const photo = (item.primary_photo?.href || item.photos?.[0]?.href || '').replace('s.jpg', 'od-w480_h360_x2.jpg');
+      
+      // Smart photo fallback
+      const photoHref = item.primary_photo?.href || item.photos?.[0]?.href || '';
+      const photo = photoHref.replace('s.jpg', 'od-w1024_h768.jpg');
 
       return {
         id: item.property_id || item.listing_id,
@@ -68,7 +70,7 @@ export const getProperties = async (req, res) => {
         baths: desc.baths || desc.baths_full || 0,
         sqft: desc.sqft || 0,
         propertyType: desc.type?.replace(/_/g, ' ') || 'Residential',
-        image: photo || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&q=80&w=800',
+        image: photo || 'https://images.unsplash.com/photo-1600585154340-be6199f7c096?auto=format&fit=crop&q=80&w=800',
         status: marketType === 'sold' ? 'SOLD' : marketType === 'rent' ? 'FOR_RENT' : 'FOR_SALE',
         views: Math.floor(Math.random() * 900) + 100,
         interestedCount: Math.floor(Math.random() * 40) + 2,
