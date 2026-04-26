@@ -107,11 +107,15 @@ export const getPropertyDetails = async (req, res) => {
     const desc = raw.description || {};
     const loc = raw.location?.address || {};
     const advertiser = raw.advertisers?.[0] || {};
-    const photos = (raw.photos || []).map((p) => p.href || p).filter(Boolean);
+    const photos = (raw.photos || []).map((p) => {
+      const href = p.href || p;
+      // Transform low-res thumbnail 's.jpg' to High-Definition 'od-w1024_h768.jpg'
+      return typeof href === 'string' ? href.replace('s.jpg', 'od-w1024_h768.jpg') : href;
+    }).filter(Boolean);
 
     const ROOM_TAGS = ['Living Room', 'Kitchen', 'Master Bedroom', 'Bathroom', 'Balcony', 'Ceiling', 'Dining Room', 'Backyard', 'Garage', 'Pool', 'Hallway', 'Laundry'];
     const gallery = photos.length > 0 
-      ? photos.slice(0, 20).map((src, i) => ({ src, label: ROOM_TAGS[i] || `Room ${i+1}` }))
+      ? photos.slice(0, 20).map((src, i) => ({ src, label: ROOM_TAGS[i] || `View ${i+1}` }))
       : [];
 
     const details = {
