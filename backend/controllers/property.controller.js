@@ -8,10 +8,13 @@ const REALTY_HOST = 'realty-in-us.p.rapidapi.com';
 export const getProperties = async (req, res) => {
   try {
     const { location = '90004', marketType = 'sale', limit = 40 } = req.query;
-    const cacheKey = `realty_list_v3_${location}_${marketType}`;
+    const cacheKey = `v3_list_${marketType}_${location.replace(/\s+/g, '_')}`;
+
+    console.log(`[API Search] Fetching ${marketType} properties for ${location}...`);
 
     if (cache.has(cacheKey)) {
-      return res.json({ success: true, data: cache.get(cacheKey), source: 'cache' });
+      console.log(`[Cache Hit] Serving ${marketType} data for ${location}`);
+      return res.json({ success: true, data: cache.get(cacheKey) });
     }
 
     // New POST endpoint from user screenshot

@@ -24,6 +24,7 @@ const Properties = () => {
   }, [location.search, marketType]);
 
   const fetchProperties = async () => {
+    setProperties([]); // Clear list immediately to show it's refreshing
     setLoading(true);
     setIsFallback(false);
     try {
